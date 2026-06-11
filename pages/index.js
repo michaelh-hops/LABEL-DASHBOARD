@@ -24,9 +24,12 @@ const SEED = {
     low_stock: [
       { title: 'LY hat', variant: '', units: 3 },
       { title: 'LOS YORK CITIZEN HEAVYWEIGHT HOODIE', variant: 'S', units: 2 },
-      { title: 'Citizens Circle: Radu Pose', variant: 'S', units: 3 },
       { title: 'Ball Park Stickers', variant: '', units: 4 },
-      { title: 'LOS YORK Pixels Hoodie', variant: 'S', units: 5 },
+      { title: 'LOS YORK Pixels Hoodie', variant: 'S', units: 1 },
+    ],
+    out_of_stock: [
+      { title: 'Citizens Circle: Radu Pose', variant: 'S', units: 0 },
+      { title: 'LOS YORK GN T-shirt', variant: 'XS', units: 0 },
     ],
     most_moved: [
       { title: 'SAUNA HAT', variant: '', units_sold: 8, remaining: 133 },
@@ -120,6 +123,7 @@ export default function Dashboard() {
   const products = data?.products || [];
   const referrers = data?.referrers || [];
   const lowStock = data?.inventory?.low_stock || [];
+  const outOfStock = data?.inventory?.out_of_stock || [];
   const mostMoved = data?.inventory?.most_moved || [];
 
   const tabBtn = (t, label) => (
@@ -132,6 +136,16 @@ export default function Dashboard() {
     <button key={d} onClick={() => { setDays(d); fetchData(d); }} style={{ background: days === d ? '#1c1f2e' : 'none', color: days === d ? '#fff' : '#999', border: days === d ? '0.5px solid #1c1f2e' : '0.5px solid #ddd', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
       {d === 7 ? 'Last 7 days' : d === 14 ? 'Last 14 days' : d === 30 ? 'Last 30 days' : 'Last 90 days'}
     </button>
+  );
+
+  const InventoryRow = ({ item, badge }) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 16px', borderBottom: '0.5px solid #f5f5f2' }}>
+      <div>
+        <div style={{ fontSize: '13px', color: '#2a2a2a' }}>{item.title}</div>
+        {item.variant && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{item.variant}</div>}
+      </div>
+      {badge}
+    </div>
   );
 
   return (
@@ -179,7 +193,7 @@ export default function Dashboard() {
         </div>
 
         {/* Tabs */}
-        <div style={{ ...S.tabs }}>
+        <div style={S.tabs}>
           {[['sales','Sales'],['inventory','Inventory'],['traffic','Traffic'],['ads','Ads']].map(([t,l]) => tabBtn(t,l))}
         </div>
 
@@ -214,39 +228,72 @@ export default function Dashboard() {
           {/* INVENTORY */}
           {tab === 'inventory' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div>
-                <div style={{ ...S.secLabel, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d94f4f', display: 'inline-block' }} />
-                  Low stock — under 5 units
+
+              {/* Left column — low stock + out of stock */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                {/* Low stock */}
+                <div>
+                  <div style={{ ...S.secLabel, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d97706', display: 'inline-block' }} />
+                    Low stock — 1 to 4 units
+                    {lowStock.length > 0 && <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 600, background: '#fef3c7', color: '#92400e', padding: '1px 7px', borderRadius: '10px' }}>{lowStock.length}</span>}
+                  </div>
+                  <div style={S.tbl}>
+                    {lowStock.length === 0 ? (
+                      <div style={{ padding: '20px 16px', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>All good — nothing low</div>
+                    ) : (
+                      lowStock.map((item, i) => (
+                        <InventoryRow key={i} item={item} badge={
+                          <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: '#fef3c7', color: '#92400e', whiteSpace: 'nowrap' }}>
+                            {item.units} left
+                          </span>
+                        } />
+                      ))
+                    )}
+                  </div>
                 </div>
-                <div style={S.tbl}>
-                  {lowStock.map((item, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 16px', borderBottom: i < lowStock.length - 1 ? '0.5px solid #f5f5f2' : 'none' }}>
-                      <div>
-                        <div style={{ fontSize: '13px', color: '#2a2a2a' }}>{item.title}</div>
-                        {item.variant && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{item.variant}</div>}
-                      </div>
-                      <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: item.units <= 2 ? '#fef0f0' : '#fef8ec', color: item.units <= 2 ? '#d94f4f' : '#b07d1a' }}>
-                        {item.units} left
-                      </span>
-                    </div>
-                  ))}
+
+                {/* Out of stock */}
+                <div>
+                  <div style={{ ...S.secLabel, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d94f4f', display: 'inline-block' }} />
+                    Out of stock
+                    {outOfStock.length > 0 && <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 600, background: '#fef0f0', color: '#991b1b', padding: '1px 7px', borderRadius: '10px' }}>{outOfStock.length}</span>}
+                  </div>
+                  <div style={S.tbl}>
+                    {outOfStock.length === 0 ? (
+                      <div style={{ padding: '20px 16px', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>Nothing out of stock</div>
+                    ) : (
+                      outOfStock.map((item, i) => (
+                        <InventoryRow key={i} item={item} badge={
+                          <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: '#fef0f0', color: '#d94f4f', whiteSpace: 'nowrap' }}>
+                            Out of stock
+                          </span>
+                        } />
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* Right column — most moved */}
               <div>
                 <div style={{ ...S.secLabel, display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34c759', display: 'inline-block' }} />
                   Most moved — last {days} days
                 </div>
                 <div style={S.tbl}>
-                  {mostMoved.map((item, i) => (
+                  {mostMoved.length === 0 ? (
+                    <div style={{ padding: '20px 16px', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>No sales data for this period</div>
+                  ) : mostMoved.map((item, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 16px', borderBottom: i < mostMoved.length - 1 ? '0.5px solid #f5f5f2' : 'none' }}>
                       <div>
                         <div style={{ fontSize: '13px', color: '#2a2a2a' }}>{item.title}</div>
                         {item.variant && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{item.variant}</div>}
                         <div style={{ fontSize: '10px', color: '#ccc', marginTop: '2px' }}>{item.remaining} remaining</div>
                       </div>
-                      <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: '#f0faf3', color: '#1a7a3a' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: '#f0faf3', color: '#1a7a3a', whiteSpace: 'nowrap' }}>
                         {item.units_sold} sold
                       </span>
                     </div>
@@ -344,7 +391,6 @@ export default function Dashboard() {
                   <div style={{ fontSize: '11px', color: '#ddd' }}>Hit Update to add this week's Reaktion numbers</div>
                 </div>
               )}
-
               <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '6px', fontSize: '11px', color: '#bbb', lineHeight: 1.6 }}>
                 Reaktion has no public API — enter manually from <span style={{ color: '#888' }}>advertiser.reaktion.com</span> (~2 min weekly)
               </div>
