@@ -212,7 +212,7 @@ export default function Dashboard() {
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 16px', borderBottom: '0.5px solid #f5f5f2' }}>
       <div>
         <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{item.title}</div>
-        {item.variant && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{item.variant}</div>}
+        {item.variant && <div style={{ fontSize: '11px', color: '#777', marginTop: '2px' }}>{item.variant}</div>}
       </div>
       {badge}
     </div>
@@ -294,7 +294,7 @@ export default function Dashboard() {
                 {products.map((p, i) => (
                   <div key={i} style={{ ...S.trow, gridTemplateColumns: '1fr 70px 90px', borderBottom: i < products.length - 1 ? '0.5px solid #f5f5f2' : 'none' }}>
                     <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{p.title}</span>
-                    <span style={{ textAlign: 'right', fontSize: '13px', color: '#aaa', fontWeight: '500' }}>{p.units}</span>
+                    <span style={{ textAlign: 'right', fontSize: '13px', color: '#666', fontWeight: '500' }}>{p.units}</span>
                     <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{fmt(p.revenue)}</span>
                   </div>
                 ))}
@@ -304,7 +304,7 @@ export default function Dashboard() {
                   <span style={{ textAlign: 'right' }}>{fmt(products.reduce((s, p) => s + p.revenue, 0))}</span>
                 </div>
               </div>
-              <div style={{ fontSize: '11px', color: '#ccc', marginTop: '8px' }}>All discount codes excluded · WELCOME code orders included at discounted price</div>
+              <div style={{ fontSize: '11px', color: '#888', marginTop: '8px' }}>All discount codes excluded · WELCOME code orders included at discounted price</div>
             </div>
           )}
 
@@ -373,8 +373,8 @@ export default function Dashboard() {
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 18px', borderBottom: i < mostMoved.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                       <div>
                         <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{item.title}</div>
-                        {item.variant && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{item.variant}</div>}
-                        <div style={{ fontSize: '10px', color: '#ccc', marginTop: '2px' }}>{item.remaining} remaining</div>
+                        {item.variant && <div style={{ fontSize: '11px', color: '#777', marginTop: '2px' }}>{item.variant}</div>}
+                        <div style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>{item.remaining} remaining</div>
                       </div>
                       <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '3px', background: '#e8f5ee', color: '#1e8449', whiteSpace: 'nowrap' }}>
                         {item.units_sold} sold
@@ -392,7 +392,7 @@ export default function Dashboard() {
               <div style={S.secLabel}>Order sources</div>
               <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', overflow: 'hidden' }}>
                 {/* Table header */}
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 80px 80px 100px 100px', padding: '10px 18px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', fontWeight: 600, background: '#fafafa' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 80px 80px 100px 100px', padding: '10px 18px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#777', fontWeight: 600, background: '#fafafa' }}>
                   <span>Source</span>
                   <span style={{ textAlign: 'right' }}>Orders</span>
                   <span style={{ textAlign: 'right' }}>Share</span>
@@ -416,7 +416,7 @@ export default function Dashboard() {
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#1a1a1a' }}>{r.source}</span>
                           </div>
                           <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{r.orders}</span>
-                          <span style={{ textAlign: 'right', fontSize: '13px', color: '#999', fontWeight: 500 }}>{sharePct}%</span>
+                          <span style={{ textAlign: 'right', fontSize: '13px', color: '#666', fontWeight: 500 }}>{sharePct}%</span>
                           <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{fmt(r.revenue)}</span>
                           <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{fmt(perOrder)}</span>
                         </div>
@@ -505,7 +505,7 @@ export default function Dashboard() {
                   <div style={{ fontSize: '11px', color: '#ddd' }}>Hit Update to add this week's Reaktion numbers</div>
                 </div>
               )}
-              <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '6px', fontSize: '11px', color: '#bbb', lineHeight: 1.6 }}>
+              <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '6px', fontSize: '11px', color: '#777', lineHeight: 1.6 }}>
                 Reaktion has no public API — enter manually from <span style={{ color: '#888' }}>advertiser.reaktion.com</span> (~2 min weekly)
               </div>
             </div>
@@ -517,9 +517,9 @@ export default function Dashboard() {
 
               {/* Client Gifting */}
               <div>
-                <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginBottom: '12px', fontWeight: 600 }}>Client Gifting</div>
+                <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#555', marginBottom: '12px', fontWeight: 600 }}>Client Gifting</div>
                 <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', overflow: 'hidden' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '10px 16px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', fontWeight: 600, background: '#fafafa' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '10px 16px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#777', fontWeight: 600, background: '#fafafa' }}>
                     <span>Product</span><span style={{ textAlign: 'right' }}>Units</span>
                   </div>
                   {giftingClient.products.map((p, i) => (
@@ -533,7 +533,7 @@ export default function Dashboard() {
                     <span style={{ textAlign: 'right' }}>{giftingClient.products.reduce((s, p) => s + p.units, 0)}</span>
                   </div>
                 </div>
-                <button onClick={() => setClientOpen(!clientOpen)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#fafafa', border: 'none', borderTop: '1.5px solid #e0e0e0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999', marginTop: '12px' }}>
+                <button onClick={() => setClientOpen(!clientOpen)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#fafafa', border: 'none', borderTop: '1.5px solid #e0e0e0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', marginTop: '12px' }}>
                   <span>{clientOpen ? 'Hide Orders' : `View Orders (${giftingClient.orders.length})`}</span>
                   <span style={{ fontSize: '10px', transform: clientOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
                 </button>
@@ -542,8 +542,8 @@ export default function Dashboard() {
                     {giftingClient.orders.map((o, i) => (
                       <div key={i} style={{ padding: '12px 16px', borderBottom: i < giftingClient.orders.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                         <div style={{ fontSize: '13px', fontWeight: 600, color: '#1a1a1a' }}>{o.name}</div>
-                        <div style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: 1.5 }}>{o.items}</div>
-                        <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{o.date}</div>
+                        <div style={{ fontSize: '11px', color: '#777', marginTop: '3px', lineHeight: 1.5 }}>{o.items}</div>
+                        <div style={{ fontSize: '11px', color: '#777', marginTop: '2px' }}>{o.date}</div>
                       </div>
                     ))}
                   </div>
@@ -552,9 +552,9 @@ export default function Dashboard() {
 
               {/* Freelance */}
               <div>
-                <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginBottom: '12px', fontWeight: 600 }}>Freelance</div>
+                <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#555', marginBottom: '12px', fontWeight: 600 }}>Freelance</div>
                 <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', overflow: 'hidden' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '10px 16px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', fontWeight: 600, background: '#fafafa' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '10px 16px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#777', fontWeight: 600, background: '#fafafa' }}>
                     <span>Product</span><span style={{ textAlign: 'right' }}>Units</span>
                   </div>
                   {giftingFreelance.products.map((p, i) => (
@@ -568,7 +568,7 @@ export default function Dashboard() {
                     <span style={{ textAlign: 'right' }}>{giftingFreelance.products.reduce((s, p) => s + p.units, 0)}</span>
                   </div>
                 </div>
-                <button onClick={() => setFreelanceOpen(!freelanceOpen)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#fafafa', border: 'none', borderTop: '1.5px solid #e0e0e0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999', marginTop: '12px' }}>
+                <button onClick={() => setFreelanceOpen(!freelanceOpen)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#fafafa', border: 'none', borderTop: '1.5px solid #e0e0e0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', marginTop: '12px' }}>
                   <span>{freelanceOpen ? 'Hide Orders' : `View Orders (${giftingFreelance.orders.length})`}</span>
                   <span style={{ fontSize: '10px', transform: freelanceOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
                 </button>
@@ -577,8 +577,8 @@ export default function Dashboard() {
                     {giftingFreelance.orders.map((o, i) => (
                       <div key={i} style={{ padding: '12px 16px', borderBottom: i < giftingFreelance.orders.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                         <div style={{ fontSize: '13px', fontWeight: 600, color: '#1a1a1a' }}>{o.name}</div>
-                        <div style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: 1.5 }}>{o.items}</div>
-                        <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{o.date}</div>
+                        <div style={{ fontSize: '11px', color: '#777', marginTop: '3px', lineHeight: 1.5 }}>{o.items}</div>
+                        <div style={{ fontSize: '11px', color: '#777', marginTop: '2px' }}>{o.date}</div>
                       </div>
                     ))}
                   </div>
@@ -591,7 +591,7 @@ export default function Dashboard() {
         </div>
 
         <div style={{ borderTop: '0.5px solid #ebebeb', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', background: '#fff' }}>
-          <span style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', fontWeight: '600' }}>Los York Label · Internal Use Only</span>
+          <span style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#777', fontWeight: '600' }}>Los York Label · Internal Use Only</span>
           <span style={{ fontSize: '10px', color: '#ccc' }}>losyorklabel.com</span>
         </div>
 
