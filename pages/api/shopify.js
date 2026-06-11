@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
   try {
     const { orders } = await shopifyFetch(
-      `orders.json?status=any&created_at_min=${since}&created_at_max=${until}&limit=250&fields=id,created_at,total_price,discount_codes,line_items,referring_site`
+      `orders.json?status=any&created_at_min=${since}&created_at_max=${until}&limit=250&fields=id,created_at,total_price,discount_codes,line_items,referring_site,customer`
     );
 
     const filtered = orders.filter(order => {
@@ -55,6 +55,49 @@ export default async function handler(req, res) {
       });
     });
     const products = Object.values(productMap).sort((a, b) => b.revenue - a.revenue).slice(0, 15);
+
+    // Build gifting data — all discount code orders except WELCOME and FREE?LANCE?25?
+    const FREELANCE_CODE = 'FREE?LANCE?25?';
+    const WELCOME_CODE = 'WELCOME';
+
+    const clientGiftOrders = orders.filter(order => {
+      const codes = (order.discount_codes || []).map(c => c.code.toUpperCase());
+      if (codes.length === 0) return false;
+      if (codes.includes(WELCOME_CODE)) return false;
+      if (codes.includes(FREELANCE_CODE)) return false;
+      return true;
+    });
+
+    const freelanceOrders = orders.filter(order => {
+      const codes = (order.discount_codes || []).map(c => c.code.toUpperCase());
+      return codes.includes(FREELANCE_CODE);
+    });
+
+    function buildGiftProducts(giftOrders) {
+      const map = {};
+      giftOrders.forEach(order => {
+        (order.line_items || []).forEach(item => {
+          if (!map[item.title]) map[item.title] = { title: item.title, units: 0 };
+          map[item.title].units += item.quantity;
+        });
+      });
+      return Object.values(map).sort((a, b) => b.units - a.units);
+    }
+
+    function buildGiftOrderList(giftOrders) {
+      return giftOrders.map(order => ({
+        name: order.customer_name || 'Guest',
+        date: new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        items: (order.line_items || []).map(item => item.quantity > 1 ? `${item.title} ×${item.quantity}` : item.title).join(', ')
+      }));
+    }
+
+    const clientGiftProducts = buildGiftProducts(clientGiftOrders);
+    const freelanceProducts = buildGiftProducts(freelanceOrders);
+    const clientGiftOrderList = buildGiftOrderList(clientGiftOrders);
+    const freelanceOrderList = buildGiftOrderList(freelanceOrders);
+
+    const totalGiftedUnits = [...clientGiftProducts, ...freelanceProducts].reduce((s, p) => s + p.units, 0);
 
     const referrerMap = {};
     filtered.forEach(order => {
@@ -99,12 +142,17 @@ export default async function handler(req, res) {
         gross_revenue: Math.round(filtered.reduce((s, o) => s + parseFloat(o.total_price), 0)),
         total_units: products.reduce((s, p) => s + p.units, 0),
         aov: filtered.length > 0 ? Math.round(filtered.reduce((s, o) => s + parseFloat(o.total_price), 0) / filtered.length) : 0,
+        units_gifted: totalGiftedUnits,
       },
       products, referrers,
       inventory: {
         low_stock: lowStock.slice(0, 20),
         out_of_stock: outOfStock.slice(0, 20),
         most_moved: mostMoved,
+      },
+      gifting: {
+        client: { products: clientGiftProducts, orders: clientGiftOrderList },
+        freelance: { products: freelanceProducts, orders: freelanceOrderList },
       },
       updated_at: new Date().toISOString(),
     });
