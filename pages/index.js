@@ -40,6 +40,41 @@ const SEED = {
     ],
   },
   updated_at: new Date().toISOString(),
+  gifting: {
+    client: {
+      products: [
+        { title: 'LOS YORK Global Nomads hat', units: 6 },
+        { title: 'The LOS YORK Global Nomads 25 Tote', units: 4 },
+        { title: 'LOS YORK Pixels Socks', units: 3 },
+        { title: 'Sauna Hat', units: 2 },
+        { title: 'LOS YORK Camera Club Tee', units: 2 },
+        { title: 'Long Sleeve T', units: 1 },
+      ],
+      orders: [
+        { name: 'Justin Medley', date: 'Jun 10', items: 'Pixels Socks ×2, GN Hat ×2, GN 25 Tote ×2, Courage' },
+        { name: 'Nikki Peddie', date: 'Jun 9', items: 'GN Hat, Pixels Tote, Long Sleeve T, Sauna Hat' },
+        { name: 'shawn kelley', date: 'Jun 8', items: 'Pixels Socks, GN Hat, Camera Club Tee' },
+        { name: 'Avni Patel', date: 'Jun 6', items: 'GN 25 Tote' },
+        { name: 'Molly Tanen', date: 'Jun 5', items: 'GN Hat, Pixels Socks ×2, Camera Club Tee, Sauna Hat' },
+        { name: 'earl mcdaniel', date: 'Jun 5', items: 'Pixels Tote, Long Sleeve T' },
+        { name: 'Lin Wilde', date: 'Jun 5', items: 'GN Hat, Pixels Socks' },
+        { name: 'Travis Ragsdale', date: 'Jun 5', items: 'Pixels Tote, GN Hat, Sauna Hat' },
+      ]
+    },
+    freelance: {
+      products: [
+        { title: 'LOS YORK Global Nomads hat', units: 2 },
+        { title: 'Long Sleeve T', units: 2 },
+        { title: 'LOS YORK Pixels Tote', units: 1 },
+        { title: 'Sauna Hat', units: 1 },
+      ],
+      orders: [
+        { name: 'Afonso Calixto', date: 'Apr 16', items: 'GN Hat, Pixels Socks' },
+        { name: 'Sally Kallet', date: 'Apr 17', items: 'Long Sleeve T, Camera Club Tee' },
+        { name: 'Tin Tran', date: 'Apr 25', items: 'Pixels Tote, Sauna Hat' },
+      ]
+    }
+  },
 };
 
 const PLATFORM_STYLES = {
@@ -79,7 +114,7 @@ const S = {
   refreshBtn: { fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 14px', cursor: 'pointer', background: 'none', border: '1.5px solid #555', borderRadius: '3px', color: '#aaa', fontFamily: 'inherit', fontWeight: '600' },
   timebar: { background: '#fff', padding: '12px 28px', borderBottom: '2px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' },
   timeLabel: { fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginRight: '4px', fontWeight: '600' },
-  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0', background: '#fff', borderBottom: '2px solid #e0e0e0' },
+  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '0', background: '#fff', borderBottom: '2px solid #e0e0e0' },
   kpiCard: { padding: '26px 28px 22px' },
   kpiLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '6px' },
   kpiVal: { fontSize: '26px', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, color: '#1c1f2e' },
@@ -101,6 +136,8 @@ export default function Dashboard() {
   const [tab, setTab] = useState('sales');
   const [reaktion, setReaktion] = useState(null);
   const [editingR, setEditingR] = useState(false);
+  const [clientOpen, setClientOpen] = useState(false);
+  const [freelanceOpen, setFreelanceOpen] = useState(false);
   const [rDraft, setRDraft] = useState({});
   const [showCustom, setShowCustom] = useState(false);
   const [customFrom, setCustomFrom] = useState('');
@@ -155,6 +192,9 @@ export default function Dashboard() {
   const lowStock = data?.inventory?.low_stock || [];
   const outOfStock = data?.inventory?.out_of_stock || [];
   const mostMoved = data?.inventory?.most_moved || [];
+  const giftingClient = data?.gifting?.client || { products: [], orders: [] };
+  const giftingFreelance = data?.gifting?.freelance || { products: [], orders: [] };
+  const totalGiftedUnits = [...(giftingClient.products || []), ...(giftingFreelance.products || [])].reduce((s, p) => s + p.units, 0);
 
   const tabBtn = (t, label) => (
     <button key={t} onClick={() => setTab(t)} style={{ background: 'none', border: 'none', borderBottom: tab === t ? '3px solid #1a1a1a' : '3px solid transparent', color: tab === t ? '#1a1a1a' : '#aaa', padding: '13px 20px', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'inherit', fontWeight: '600', transition: 'all .15s', marginBottom: '-2px' }}>
@@ -190,9 +230,7 @@ export default function Dashboard() {
         {/* Header */}
         <div style={S.header}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={S.logoText}>Los York</span>
-            <span style={{ color: '#2a2d40', margin: '0 6px' }}>®</span>
-            <span style={S.logoSub}>Label / Operations</span>
+            <span style={{ ...S.logoText, fontSize: '13px', letterSpacing: '0.25em' }}>Los York Label</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {isLive && <span style={S.livePill}>● live</span>}
@@ -224,22 +262,22 @@ export default function Dashboard() {
         {/* KPIs */}
         <div style={S.kpiGrid}>
           {[
-            { label: 'Gross Revenue', value: s.gross_revenue != null ? fmt(s.gross_revenue) : '—', sub: '' },
-            { label: 'Total Orders', value: s.total_orders ?? '—', sub: '' },
-            { label: 'Avg Order Value', value: s.aov != null ? fmt(s.aov) : '—', sub: '' },
-            { label: 'Units Sold', value: s.total_units ?? '—', sub: '' },
+            { label: 'Gross Revenue', value: s.gross_revenue != null ? fmt(s.gross_revenue) : '—' },
+            { label: 'Total Orders', value: s.total_orders ?? '—' },
+            { label: 'Avg Order Value', value: s.aov != null ? fmt(s.aov) : '—' },
+            { label: 'Units Sold', value: s.total_units ?? '—' },
+            { label: 'Units Gifted', value: s.units_gifted ?? '—', gifted: true },
           ].map((k, i) => (
-            <div key={i} style={{ ...S.kpiCard, borderRight: i < 3 ? '1.5px solid #e8e8e8' : 'none' }}>
+            <div key={i} style={{ ...S.kpiCard, borderRight: i < 4 ? '1.5px solid #e8e8e8' : 'none', background: k.gifted ? '#fafafa' : '#fff' }}>
               <div style={S.kpiLabel}>{k.label}</div>
-              <div style={{ ...S.kpiVal, color: loading ? '#ccc' : '#1c1f2e' }}>{k.value}</div>
-              {k.sub && <div style={S.kpiSub}>{k.sub}</div>}
+              <div style={{ ...S.kpiVal, color: loading ? '#ccc' : '#1a1a1a' }}>{k.value}</div>
             </div>
           ))}
         </div>
 
         {/* Tabs */}
         <div style={S.tabs}>
-          {[['sales','Sales'],['inventory','Inventory'],['traffic','Traffic'],['ads','Ads']].map(([t,l]) => tabBtn(t,l))}
+          {[['sales','Sales'],['inventory','Inventory'],['traffic','Traffic'],['gifting','Gifting'],['ads','Ads']].map(([t,l]) => tabBtn(t,l))}
         </div>
 
         {/* Content */}
@@ -470,6 +508,83 @@ export default function Dashboard() {
               <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '6px', fontSize: '11px', color: '#bbb', lineHeight: 1.6 }}>
                 Reaktion has no public API — enter manually from <span style={{ color: '#888' }}>advertiser.reaktion.com</span> (~2 min weekly)
               </div>
+            </div>
+          )}
+
+          {/* GIFTING */}
+          {tab === 'gifting' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+
+              {/* Client Gifting */}
+              <div>
+                <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginBottom: '12px', fontWeight: 600 }}>Client Gifting</div>
+                <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', overflow: 'hidden' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '10px 16px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', fontWeight: 600, background: '#fafafa' }}>
+                    <span>Product</span><span style={{ textAlign: 'right' }}>Units</span>
+                  </div>
+                  {giftingClient.products.map((p, i) => (
+                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '13px 16px', borderBottom: i < giftingClient.products.length - 1 ? '1px solid #f0f0f0' : 'none', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500 }}>{p.title}</span>
+                      <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{p.units}</span>
+                    </div>
+                  ))}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '12px 16px', borderTop: '2px solid #e0e0e0', background: '#fafafa', fontWeight: 800, fontSize: '12px', color: '#1a1a1a' }}>
+                    <span>Total</span>
+                    <span style={{ textAlign: 'right' }}>{giftingClient.products.reduce((s, p) => s + p.units, 0)}</span>
+                  </div>
+                </div>
+                <button onClick={() => setClientOpen(!clientOpen)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#fafafa', border: 'none', borderTop: '1.5px solid #e0e0e0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999', marginTop: '12px' }}>
+                  <span>{clientOpen ? 'Hide Orders' : `View Orders (${giftingClient.orders.length})`}</span>
+                  <span style={{ fontSize: '10px', transform: clientOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+                </button>
+                {clientOpen && (
+                  <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', borderTop: 'none', overflow: 'hidden' }}>
+                    {giftingClient.orders.map((o, i) => (
+                      <div key={i} style={{ padding: '12px 16px', borderBottom: i < giftingClient.orders.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#1a1a1a' }}>{o.name}</div>
+                        <div style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: 1.5 }}>{o.items}</div>
+                        <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{o.date}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Freelance */}
+              <div>
+                <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginBottom: '12px', fontWeight: 600 }}>Freelance</div>
+                <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', overflow: 'hidden' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '10px 16px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', fontWeight: 600, background: '#fafafa' }}>
+                    <span>Product</span><span style={{ textAlign: 'right' }}>Units</span>
+                  </div>
+                  {giftingFreelance.products.map((p, i) => (
+                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '13px 16px', borderBottom: i < giftingFreelance.products.length - 1 ? '1px solid #f0f0f0' : 'none', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500 }}>{p.title}</span>
+                      <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{p.units}</span>
+                    </div>
+                  ))}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '12px 16px', borderTop: '2px solid #e0e0e0', background: '#fafafa', fontWeight: 800, fontSize: '12px', color: '#1a1a1a' }}>
+                    <span>Total</span>
+                    <span style={{ textAlign: 'right' }}>{giftingFreelance.products.reduce((s, p) => s + p.units, 0)}</span>
+                  </div>
+                </div>
+                <button onClick={() => setFreelanceOpen(!freelanceOpen)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#fafafa', border: 'none', borderTop: '1.5px solid #e0e0e0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999', marginTop: '12px' }}>
+                  <span>{freelanceOpen ? 'Hide Orders' : `View Orders (${giftingFreelance.orders.length})`}</span>
+                  <span style={{ fontSize: '10px', transform: freelanceOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+                </button>
+                {freelanceOpen && (
+                  <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', borderTop: 'none', overflow: 'hidden' }}>
+                    {giftingFreelance.orders.map((o, i) => (
+                      <div key={i} style={{ padding: '12px 16px', borderBottom: i < giftingFreelance.orders.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#1a1a1a' }}>{o.name}</div>
+                        <div style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: 1.5 }}>{o.items}</div>
+                        <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{o.date}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
 
