@@ -71,26 +71,26 @@ function timeAgo(iso) {
 }
 
 const S = {
-  wrap: { fontFamily: "'Inter', 'Helvetica Neue', sans-serif", background: '#f7f7f7', minHeight: '100vh', color: '#1a1a1a' },
-  header: { background: '#1c1f2e', padding: '13px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
+  wrap: { fontFamily: "'Inter', 'Helvetica Neue', sans-serif", background: '#f0f0f0', minHeight: '100vh', color: '#1a1a1a' },
+  header: { background: '#1a1a1a', padding: '14px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10, borderBottom: '2px solid #000' },
   logoText: { fontWeight: 600, fontSize: '12px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#fff' },
   logoSub: { fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#4a5070', marginLeft: '10px' },
-  livePill: { fontSize: '10px', background: 'rgba(52,199,89,0.12)', color: '#34c759', border: '0.5px solid rgba(52,199,89,0.25)', padding: '3px 8px', borderRadius: '20px' },
-  refreshBtn: { fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '4px 12px', cursor: 'pointer', background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: '4px', color: '#8890b0', fontFamily: 'inherit' },
-  timebar: { background: '#fff', padding: '10px 24px', borderBottom: '0.5px solid #ebebeb', display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' },
-  timeLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginRight: '4px' },
-  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: '#ebebeb' },
-  kpiCard: { padding: '24px 24px 22px', background: '#fff' },
+  livePill: { fontSize: '10px', background: 'rgba(30,132,73,0.1)', color: '#1e8449', border: '1.5px solid rgba(30,132,73,0.25)', padding: '4px 10px', borderRadius: '3px', letterSpacing: '.08em', fontWeight: '700' },
+  refreshBtn: { fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 14px', cursor: 'pointer', background: 'none', border: '1.5px solid #555', borderRadius: '3px', color: '#aaa', fontFamily: 'inherit', fontWeight: '600' },
+  timebar: { background: '#fff', padding: '12px 28px', borderBottom: '2px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' },
+  timeLabel: { fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginRight: '4px', fontWeight: '600' },
+  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0', background: '#fff', borderBottom: '2px solid #e0e0e0' },
+  kpiCard: { padding: '26px 28px 22px' },
   kpiLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '6px' },
   kpiVal: { fontSize: '26px', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, color: '#1c1f2e' },
   kpiSub: { fontSize: '10px', color: '#ccc', marginTop: '4px' },
-  tabs: { background: '#fff', display: 'flex', gap: '4px', padding: '14px 24px', borderBottom: '0.5px solid #ebebeb', borderTop: '0.5px solid #ebebeb', marginTop: '1px' },
-  content: { padding: '20px 24px 40px' },
-  secLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '10px' },
+  tabs: { background: '#fff', display: 'flex', gap: '0', padding: '0 28px', borderBottom: '2px solid #e0e0e0' },
+  content: { padding: '28px 28px 48px' },
+  secLabel: { fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginBottom: '12px', fontWeight: '600' },
   tbl: { background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '8px', overflow: 'hidden' },
-  thead: { display: 'grid', padding: '9px 16px', borderBottom: '0.5px solid #f0f0ec', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' },
-  trow: { display: 'grid', padding: '11px 16px', borderBottom: '0.5px solid #f5f5f2', alignItems: 'center' },
-  ttotal: { display: 'grid', padding: '11px 16px', borderTop: '0.5px solid #e8e8e4', background: '#fafaf8', fontWeight: 600, fontSize: '12px', color: '#1c1f2e' },
+  thead: { display: 'grid', padding: '10px 18px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', fontWeight: '600', background: '#fafafa' },
+  trow: { display: 'grid', padding: '14px 18px', borderBottom: '1px solid #f0f0f0', alignItems: 'center' },
+  ttotal: { display: 'grid', padding: '13px 18px', borderTop: '2px solid #e0e0e0', background: '#fafafa', fontWeight: 800, fontSize: '13px', color: '#1a1a1a' },
 };
 
 export default function Dashboard() {
@@ -157,13 +157,13 @@ export default function Dashboard() {
   const mostMoved = data?.inventory?.most_moved || [];
 
   const tabBtn = (t, label) => (
-    <button key={t} onClick={() => setTab(t)} style={{ background: tab === t ? '#2c2c2c' : 'none', border: '1px solid', borderColor: tab === t ? '#2c2c2c' : '#e0e0e0', color: tab === t ? '#fff' : '#aaa', padding: '7px 18px', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '3px', fontFamily: 'inherit', transition: 'all .15s' }}>
+    <button key={t} onClick={() => setTab(t)} style={{ background: 'none', border: 'none', borderBottom: tab === t ? '3px solid #1a1a1a' : '3px solid transparent', color: tab === t ? '#1a1a1a' : '#aaa', padding: '13px 20px', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'inherit', fontWeight: '600', transition: 'all .15s', marginBottom: '-2px' }}>
       {label}
     </button>
   );
 
   const pillBtn = (d) => (
-    <button key={d} onClick={() => handleSetDays(d)} style={{ background: !isCustomActive && days === d ? '#1c1f2e' : 'none', color: !isCustomActive && days === d ? '#fff' : '#999', border: !isCustomActive && days === d ? '0.5px solid #1c1f2e' : '0.5px solid #ddd', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
+    <button key={d} onClick={() => handleSetDays(d)} style={{ background: !isCustomActive && days === d ? '#1a1a1a' : 'none', color: !isCustomActive && days === d ? '#fff' : '#888', border: !isCustomActive && days === d ? '1.5px solid #1a1a1a' : '1.5px solid #d0d0d0', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
       {d === 7 ? 'Last 7 days' : d === 14 ? 'Last 14 days' : d === 30 ? 'Last 30 days' : 'Last 90 days'}
     </button>
   );
@@ -171,7 +171,7 @@ export default function Dashboard() {
   const InventoryRow = ({ item, badge }) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 16px', borderBottom: '0.5px solid #f5f5f2' }}>
       <div>
-        <div style={{ fontSize: '13px', color: '#2a2a2a' }}>{item.title}</div>
+        <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{item.title}</div>
         {item.variant && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{item.variant}</div>}
       </div>
       {badge}
@@ -214,7 +214,7 @@ export default function Dashboard() {
               <span style={{ fontSize: '11px', color: '#bbb' }}>to</span>
               <input type="date" value={customTo} min={customFrom} max={today} onChange={e => setCustomTo(e.target.value)}
                 style={{ fontSize: '12px', padding: '3px 8px', border: '0.5px solid #ddd', borderRadius: '4px', fontFamily: 'inherit', color: '#1a1a1a', background: '#fff', outline: 'none' }} />
-              <button onClick={applyCustom} disabled={!customFrom || !customTo} style={{ background: '#1c1f2e', border: 'none', color: '#fff', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: customFrom && customTo ? 'pointer' : 'default', fontFamily: 'inherit', opacity: customFrom && customTo ? 1 : 0.4 }}>
+              <button onClick={applyCustom} disabled={!customFrom || !customTo} style={{ background: '#1a1a1a', border: 'none', color: '#fff', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: customFrom && customTo ? 'pointer' : 'default', fontFamily: 'inherit', opacity: customFrom && customTo ? 1 : 0.4 }}>
                 Apply
               </button>
             </div>
@@ -229,7 +229,7 @@ export default function Dashboard() {
             { label: 'Avg Order Value', value: s.aov != null ? fmt(s.aov) : '—', sub: '' },
             { label: 'Units Sold', value: s.total_units ?? '—', sub: '' },
           ].map((k, i) => (
-            <div key={i} style={S.kpiCard}>
+            <div key={i} style={{ ...S.kpiCard, borderRight: i < 3 ? '1.5px solid #e8e8e8' : 'none' }}>
               <div style={S.kpiLabel}>{k.label}</div>
               <div style={{ ...S.kpiVal, color: loading ? '#ccc' : '#1c1f2e' }}>{k.value}</div>
               {k.sub && <div style={S.kpiSub}>{k.sub}</div>}
@@ -249,15 +249,15 @@ export default function Dashboard() {
           {tab === 'sales' && (
             <div>
               <div style={S.secLabel}>Product sales — last {days} days</div>
-              <div style={S.tbl}>
+              <div style={{ ...S.tbl, border: '1.5px solid #e0e0e0', borderRadius: '0' }}>
                 <div style={{ ...S.thead, gridTemplateColumns: '1fr 70px 90px' }}>
                   <span>Product</span><span style={{ textAlign: 'right' }}>Units</span><span style={{ textAlign: 'right' }}>Revenue</span>
                 </div>
                 {products.map((p, i) => (
                   <div key={i} style={{ ...S.trow, gridTemplateColumns: '1fr 70px 90px', borderBottom: i < products.length - 1 ? '0.5px solid #f5f5f2' : 'none' }}>
-                    <span style={{ fontSize: '13px', color: '#2a2a2a' }}>{p.title}</span>
-                    <span style={{ textAlign: 'right', fontSize: '13px', color: '#999' }}>{p.units}</span>
-                    <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 600, color: '#1c1f2e' }}>{fmt(p.revenue)}</span>
+                    <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{p.title}</span>
+                    <span style={{ textAlign: 'right', fontSize: '13px', color: '#aaa', fontWeight: '500' }}>{p.units}</span>
+                    <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{fmt(p.revenue)}</span>
                   </div>
                 ))}
                 <div style={{ ...S.ttotal, gridTemplateColumns: '1fr 70px 90px' }}>
@@ -284,7 +284,7 @@ export default function Dashboard() {
                     Low stock — 1 to 4 units
                     {lowStock.length > 0 && <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 600, background: '#fef3c7', color: '#92400e', padding: '1px 7px', borderRadius: '10px' }}>{lowStock.length}</span>}
                   </div>
-                  <div style={S.tbl}>
+                  <div style={{ ...S.tbl, border: '1.5px solid #e0e0e0', borderRadius: '0' }}>
                     {lowStock.length === 0 ? (
                       <div style={{ padding: '20px 16px', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>All good — nothing low</div>
                     ) : (
@@ -306,7 +306,7 @@ export default function Dashboard() {
                     Out of stock
                     {outOfStock.length > 0 && <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 600, background: '#fef0f0', color: '#991b1b', padding: '1px 7px', borderRadius: '10px' }}>{outOfStock.length}</span>}
                   </div>
-                  <div style={S.tbl}>
+                  <div style={{ ...S.tbl, border: '1.5px solid #e0e0e0', borderRadius: '0' }}>
                     {outOfStock.length === 0 ? (
                       <div style={{ padding: '20px 16px', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>Nothing out of stock</div>
                     ) : (
@@ -328,17 +328,17 @@ export default function Dashboard() {
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34c759', display: 'inline-block' }} />
                   Most moved — last {days} days
                 </div>
-                <div style={S.tbl}>
+                <div style={{ ...S.tbl, border: '1.5px solid #e0e0e0', borderRadius: '0' }}>
                   {mostMoved.length === 0 ? (
                     <div style={{ padding: '20px 16px', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>No sales data for this period</div>
                   ) : mostMoved.map((item, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 16px', borderBottom: i < mostMoved.length - 1 ? '0.5px solid #f5f5f2' : 'none' }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 18px', borderBottom: i < mostMoved.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                       <div>
-                        <div style={{ fontSize: '13px', color: '#2a2a2a' }}>{item.title}</div>
+                        <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{item.title}</div>
                         {item.variant && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{item.variant}</div>}
                         <div style={{ fontSize: '10px', color: '#ccc', marginTop: '2px' }}>{item.remaining} remaining</div>
                       </div>
-                      <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: '#f0faf3', color: '#1a7a3a', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '3px', background: '#e8f5ee', color: '#1e8449', whiteSpace: 'nowrap' }}>
                         {item.units_sold} sold
                       </span>
                     </div>
@@ -352,7 +352,7 @@ export default function Dashboard() {
           {tab === 'traffic' && (
             <div style={{ maxWidth: '480px' }}>
               <div style={S.secLabel}>Order sources — last {days} days</div>
-              <div style={S.tbl}>
+              <div style={{ ...S.tbl, border: '1.5px solid #e0e0e0', borderRadius: '0' }}>
                 {referrers.map((r, i) => {
                   const ps = getPlatformStyle(r.platform || r.source);
                   return (
@@ -362,7 +362,7 @@ export default function Dashboard() {
                           {ps.icon}
                         </div>
                         <div>
-                          <div style={{ fontSize: '13px', color: '#2a2a2a', fontWeight: 500 }}>{r.source}</div>
+                          <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', fontWeight: 500 }}>{r.source}</div>
                           <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px' }}>{fmt(r.revenue)} revenue</div>
                         </div>
                       </div>
@@ -409,7 +409,7 @@ export default function Dashboard() {
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button onClick={() => { setReaktion({ ...rDraft, updated_at: new Date().toISOString() }); setEditingR(false); }}
-                      style={{ background: '#1c1f2e', border: 'none', color: '#fff', padding: '7px 18px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Save</button>
+                      style={{ background: '#1a1a1a', border: 'none', color: '#fff', padding: '7px 18px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Save</button>
                     <button onClick={() => setEditingR(false)}
                       style={{ background: 'none', border: '0.5px solid #ddd', color: '#888', padding: '7px 18px', fontSize: '11px', cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Cancel</button>
                   </div>
@@ -444,8 +444,8 @@ export default function Dashboard() {
 
         </div>
 
-        <div style={{ borderTop: '0.5px solid #ebebeb', padding: '12px 24px', display: 'flex', justifyContent: 'space-between', background: '#fff' }}>
-          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc' }}>Los York Label · Internal Use Only</span>
+        <div style={{ borderTop: '0.5px solid #ebebeb', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', background: '#fff' }}>
+          <span style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', fontWeight: '600' }}>Los York Label · Internal Use Only</span>
           <span style={{ fontSize: '10px', color: '#ccc' }}>losyorklabel.com</span>
         </div>
 
