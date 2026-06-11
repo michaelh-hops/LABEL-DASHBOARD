@@ -113,15 +113,15 @@ const S = {
   livePill: { fontSize: '10px', background: 'rgba(30,132,73,0.1)', color: '#1e8449', border: '1.5px solid rgba(30,132,73,0.25)', padding: '4px 10px', borderRadius: '3px', letterSpacing: '.08em', fontWeight: '700' },
   refreshBtn: { fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 14px', cursor: 'pointer', background: 'none', border: '1.5px solid #555', borderRadius: '3px', color: '#aaa', fontFamily: 'inherit', fontWeight: '600' },
   timebar: { background: '#fff', padding: '12px 28px', borderBottom: '2px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' },
-  timeLabel: { fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginRight: '4px', fontWeight: '600' },
+  timeLabel: { fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#666', marginRight: '4px', fontWeight: '600' },
   kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '0', background: '#fff', borderBottom: '2px solid #e0e0e0' },
   kpiCard: { padding: '26px 28px 22px' },
-  kpiLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '6px' },
+  kpiLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: '6px' },
   kpiVal: { fontSize: '26px', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, color: '#1c1f2e' },
-  kpiSub: { fontSize: '10px', color: '#ccc', marginTop: '4px' },
+  kpiSub: { fontSize: '10px', color: '#888', marginTop: '4px' },
   tabs: { background: '#fff', display: 'flex', gap: '0', padding: '0 28px', borderBottom: '2px solid #e0e0e0' },
   content: { padding: '28px 28px 48px' },
-  secLabel: { fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', marginBottom: '12px', fontWeight: '600' },
+  secLabel: { fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#555', marginBottom: '12px', fontWeight: '600' },
   tbl: { background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '8px', overflow: 'hidden' },
   thead: { display: 'grid', padding: '10px 18px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', fontWeight: '600', background: '#fafafa' },
   trow: { display: 'grid', padding: '14px 18px', borderBottom: '1px solid #f0f0f0', alignItems: 'center' },
@@ -249,7 +249,7 @@ export default function Dashboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '4px' }}>
               <input type="date" value={customFrom} max={today} onChange={e => setCustomFrom(e.target.value)}
                 style={{ fontSize: '12px', padding: '3px 8px', border: '0.5px solid #ddd', borderRadius: '4px', fontFamily: 'inherit', color: '#1a1a1a', background: '#fff', outline: 'none' }} />
-              <span style={{ fontSize: '11px', color: '#bbb' }}>to</span>
+              <span style={{ fontSize: '11px', color: '#777' }}>to</span>
               <input type="date" value={customTo} min={customFrom} max={today} onChange={e => setCustomTo(e.target.value)}
                 style={{ fontSize: '12px', padding: '3px 8px', border: '0.5px solid #ddd', borderRadius: '4px', fontFamily: 'inherit', color: '#1a1a1a', background: '#fff', outline: 'none' }} />
               <button onClick={applyCustom} disabled={!customFrom || !customTo} style={{ background: '#1a1a1a', border: 'none', color: '#fff', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: customFrom && customTo ? 'pointer' : 'default', fontFamily: 'inherit', opacity: customFrom && customTo ? 1 : 0.4 }}>
@@ -324,7 +324,7 @@ export default function Dashboard() {
                   </div>
                   <div style={{ ...S.tbl, border: '1.5px solid #e0e0e0', borderRadius: '0' }}>
                     {lowStock.length === 0 ? (
-                      <div style={{ padding: '20px 16px', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>All good — nothing low</div>
+                      <div style={{ padding: '20px 16px', fontSize: '13px', color: '#888', textAlign: 'center' }}>All good — nothing low</div>
                     ) : (
                       lowStock.map((item, i) => (
                         <InventoryRow key={i} item={item} badge={
@@ -346,7 +346,7 @@ export default function Dashboard() {
                   </div>
                   <div style={{ ...S.tbl, border: '1.5px solid #e0e0e0', borderRadius: '0' }}>
                     {outOfStock.length === 0 ? (
-                      <div style={{ padding: '20px 16px', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>Nothing out of stock</div>
+                      <div style={{ padding: '20px 16px', fontSize: '13px', color: '#888', textAlign: 'center' }}>Nothing out of stock</div>
                     ) : (
                       outOfStock.map((item, i) => (
                         <InventoryRow key={i} item={item} badge={
@@ -368,7 +368,7 @@ export default function Dashboard() {
                 </div>
                 <div style={{ ...S.tbl, border: '1.5px solid #e0e0e0', borderRadius: '0' }}>
                   {mostMoved.length === 0 ? (
-                    <div style={{ padding: '20px 16px', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>No sales data for this period</div>
+                    <div style={{ padding: '20px 16px', fontSize: '13px', color: '#888', textAlign: 'center' }}>No sales data for this period</div>
                   ) : mostMoved.map((item, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 18px', borderBottom: i < mostMoved.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                       <div>
@@ -452,7 +452,7 @@ export default function Dashboard() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                 <div>
                   <div style={S.secLabel}>Reaktion — Ad Metrics</div>
-                  {reaktion?.updated_at && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '-6px' }}>Updated {timeAgo(reaktion.updated_at)}{reaktion.name ? ` by ${reaktion.name}` : ''}</div>}
+                  {reaktion?.updated_at && <div style={{ fontSize: '11px', color: '#777', marginTop: '-6px' }}>Updated {timeAgo(reaktion.updated_at)}{reaktion.name ? ` by ${reaktion.name}` : ''}</div>}
                 </div>
                 <button onClick={() => { setRDraft(reaktion || {}); setEditingR(!editingR); }} style={{ background: 'none', border: '0.5px solid #ddd', color: '#888', padding: '5px 12px', fontSize: '11px', cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {editingR ? 'Cancel' : 'Update'}
@@ -461,18 +461,18 @@ export default function Dashboard() {
 
               {editingR ? (
                 <div style={{ background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '8px', padding: '20px' }}>
-                  <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '16px' }}>Enter this week's Reaktion numbers</div>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', marginBottom: '16px' }}>Enter this week's Reaktion numbers</div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '14px', marginBottom: '14px' }}>
                     {[['spend','Ad Spend ($)'],['roas','ROAS'],['impressions','Impressions'],['clicks','Clicks'],['ctr','CTR (%)'],['cpa','CPA ($)']].map(([key, label]) => (
                       <div key={key}>
-                        <label style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', display: 'block', marginBottom: '5px' }}>{label}</label>
+                        <label style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', display: 'block', marginBottom: '5px' }}>{label}</label>
                         <input type="number" value={rDraft[key] || ''} onChange={e => setRDraft(d => ({ ...d, [key]: e.target.value }))}
                           style={{ width: '100%', fontSize: '13px', fontFamily: 'inherit', border: '0.5px solid #ddd', borderRadius: '4px', padding: '7px 10px', background: '#fafaf8', color: '#1a1a1a', outline: 'none' }} />
                       </div>
                     ))}
                   </div>
                   <div style={{ marginBottom: '14px' }}>
-                    <label style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', display: 'block', marginBottom: '5px' }}>Your Name</label>
+                    <label style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', display: 'block', marginBottom: '5px' }}>Your Name</label>
                     <input type="text" placeholder="e.g. Mike" value={rDraft.name || ''} onChange={e => setRDraft(d => ({ ...d, name: e.target.value }))}
                       style={{ fontSize: '13px', fontFamily: 'inherit', border: '0.5px solid #ddd', borderRadius: '4px', padding: '7px 10px', width: '200px', background: '#fafaf8', color: '#1a1a1a', outline: 'none' }} />
                   </div>
@@ -501,7 +501,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div style={{ background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '8px', padding: '40px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '13px', color: '#bbb', marginBottom: '6px' }}>No ad data yet</div>
+                  <div style={{ fontSize: '13px', color: '#777', marginBottom: '6px' }}>No ad data yet</div>
                   <div style={{ fontSize: '11px', color: '#ddd' }}>Hit Update to add this week's Reaktion numbers</div>
                 </div>
               )}
@@ -592,7 +592,7 @@ export default function Dashboard() {
 
         <div style={{ borderTop: '0.5px solid #ebebeb', padding: '14px 28px', display: 'flex', justifyContent: 'space-between', background: '#fff' }}>
           <span style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#777', fontWeight: '600' }}>Los York Label · Internal Use Only</span>
-          <span style={{ fontSize: '10px', color: '#ccc' }}>losyorklabel.com</span>
+          <span style={{ fontSize: '10px', color: '#888' }}>losyorklabel.com</span>
         </div>
 
       </div>
