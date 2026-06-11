@@ -67,16 +67,24 @@ export default async function handler(req, res) {
     const { products: shopifyProducts } = await shopifyFetch('products.json?status=active&limit=250&fields=id,title,status,variants');
 
     const lowStock = [];
+    const outOfStock = [];
     const allVariants = [];
+
     shopifyProducts.forEach(product => {
       product.variants.forEach(variant => {
         const qty = variant.inventory_quantity;
         const v = variant.title === 'Default Title' ? '' : variant.title;
         allVariants.push({ title: product.title, variant: v, units: qty });
-        if (qty !== null && qty <= 5 && qty >= 0) lowStock.push({ title: product.title, variant: v, units: qty });
+        if (qty === 0) {
+          outOfStock.push({ title: product.title, variant: v, units: 0 });
+        } else if (qty > 0 && qty <= 4) {
+          lowStock.push({ title: product.title, variant: v, units: qty });
+        }
       });
     });
+
     lowStock.sort((a, b) => a.units - b.units);
+    outOfStock.sort((a, b) => a.title.localeCompare(b.title));
 
     const mostMoved = products.slice(0, 8).map(p => {
       const inv = allVariants.find(v => v.title === p.title);
@@ -91,7 +99,11 @@ export default async function handler(req, res) {
         total_units: products.reduce((s, p) => s + p.units, 0),
       },
       products, referrers,
-      inventory: { low_stock: lowStock.slice(0, 10), most_moved: mostMoved },
+      inventory: {
+        low_stock: lowStock.slice(0, 20),
+        out_of_stock: outOfStock.slice(0, 20),
+        most_moved: mostMoved,
+      },
       updated_at: new Date().toISOString(),
     });
 
