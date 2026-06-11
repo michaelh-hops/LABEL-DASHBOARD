@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 
 const SEED = {
-  summary: { total_orders: 22, gross_revenue: 3732, total_units: 14 },
+  summary: { total_orders: 22, gross_revenue: 3732, total_units: 14, aov: 170 },
   products: [
     { title: 'TRACK JACKET', units: 6, revenue: 1225 },
     { title: 'LONG SLEEVE T', units: 6, revenue: 630 },
@@ -79,7 +79,7 @@ const S = {
   refreshBtn: { fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '4px 12px', cursor: 'pointer', background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: '4px', color: '#8890b0', fontFamily: 'inherit' },
   timebar: { background: '#fff', padding: '10px 24px', borderBottom: '0.5px solid #e8e8e4', display: 'flex', alignItems: 'center', gap: '7px' },
   timeLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginRight: '4px' },
-  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', background: '#fff', borderBottom: '0.5px solid #e8e8e4' },
+  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', background: '#fff', borderBottom: '0.5px solid #e8e8e4' },
   kpiCard: { padding: '18px 24px', borderRight: '0.5px solid #e8e8e4' },
   kpiLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '6px' },
   kpiVal: { fontSize: '26px', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, color: '#1c1f2e' },
@@ -182,9 +182,10 @@ export default function Dashboard() {
           {[
             { label: 'Gross Revenue', value: s.gross_revenue != null ? fmt(s.gross_revenue) : '—', sub: 'excl. discount codes (except WELCOME)' },
             { label: 'Total Orders', value: s.total_orders ?? '—', sub: 'excl. discount codes (except WELCOME)' },
+            { label: 'Avg Order Value', value: s.aov != null ? fmt(s.aov) : '—', sub: `last ${days} days` },
             { label: 'Units Sold', value: s.total_units ?? '—', sub: `last ${days} days` },
           ].map((k, i) => (
-            <div key={i} style={{ ...S.kpiCard, borderRight: i < 2 ? '0.5px solid #e8e8e4' : 'none' }}>
+            <div key={i} style={{ ...S.kpiCard, borderRight: i < 3 ? '0.5px solid #e8e8e4' : 'none' }}>
               <div style={S.kpiLabel}>{k.label}</div>
               <div style={{ ...S.kpiVal, color: loading ? '#ccc' : '#1c1f2e' }}>{k.value}</div>
               <div style={S.kpiSub}>{k.sub}</div>
