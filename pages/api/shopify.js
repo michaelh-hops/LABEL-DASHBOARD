@@ -97,6 +97,7 @@ export default async function handler(req, res) {
         total_orders: filtered.length,
         gross_revenue: Math.round(filtered.reduce((s, o) => s + parseFloat(o.total_price), 0)),
         total_units: products.reduce((s, p) => s + p.units, 0),
+        aov: filtered.length > 0 ? Math.round(filtered.reduce((s, o) => s + parseFloat(o.total_price), 0) / filtered.length) : 0,
       },
       products, referrers,
       inventory: {
