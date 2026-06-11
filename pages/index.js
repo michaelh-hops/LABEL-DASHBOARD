@@ -102,6 +102,12 @@ export default function Dashboard() {
   const [reaktion, setReaktion] = useState(null);
   const [editingR, setEditingR] = useState(false);
   const [rDraft, setRDraft] = useState({});
+  const [showCustom, setShowCustom] = useState(false);
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [isCustomActive, setIsCustomActive] = useState(false);
+
+  const today = new Date().toISOString().split('T')[0];
 
   const fetchData = useCallback(async (d) => {
     setLoading(true);
@@ -113,11 +119,35 @@ export default function Dashboard() {
     setLoading(false);
   }, []);
 
+  const fetchCustom = useCallback(async (from, to) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/shopify?from=${from}&to=${to}`);
+      const json = await res.json();
+      if (json.ok) { setData(json); setIsLive(true); }
+    } catch (e) { console.warn('Using seed data'); }
+    setLoading(false);
+  }, []);
+
+  function applyCustom() {
+    if (!customFrom || !customTo) return;
+    setIsCustomActive(true);
+    setShowCustom(false);
+    fetchCustom(customFrom, customTo);
+  }
+
+  function handleSetDays(d) {
+    setDays(d);
+    setIsCustomActive(false);
+    setShowCustom(false);
+    fetchData(d);
+  }
+
   useEffect(() => {
     fetchData(days);
-    const iv = setInterval(() => fetchData(days), 10 * 60 * 1000);
+    const iv = setInterval(() => { if (!isCustomActive) fetchData(days); }, 10 * 60 * 1000);
     return () => clearInterval(iv);
-  }, [days, fetchData]);
+  }, [days, fetchData, isCustomActive]);
 
   const s = data?.summary || {};
   const products = data?.products || [];
@@ -133,7 +163,7 @@ export default function Dashboard() {
   );
 
   const pillBtn = (d) => (
-    <button key={d} onClick={() => { setDays(d); fetchData(d); }} style={{ background: days === d ? '#1c1f2e' : 'none', color: days === d ? '#fff' : '#999', border: days === d ? '0.5px solid #1c1f2e' : '0.5px solid #ddd', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
+    <button key={d} onClick={() => handleSetDays(d)} style={{ background: !isCustomActive && days === d ? '#1c1f2e' : 'none', color: !isCustomActive && days === d ? '#fff' : '#999', border: !isCustomActive && days === d ? '0.5px solid #1c1f2e' : '0.5px solid #ddd', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
       {d === 7 ? 'Last 7 days' : d === 14 ? 'Last 14 days' : d === 30 ? 'Last 30 days' : 'Last 90 days'}
     </button>
   );
@@ -172,9 +202,24 @@ export default function Dashboard() {
         </div>
 
         {/* Time bar */}
-        <div style={S.timebar}>
+        <div style={{ ...S.timebar, flexWrap: 'wrap', gap: '7px' }}>
           <span style={S.timeLabel}>Showing:</span>
           {[7, 14, 30, 90].map(pillBtn)}
+          <button onClick={() => { setShowCustom(!showCustom); }} style={{ background: isCustomActive ? '#1c1f2e' : 'none', color: isCustomActive ? '#fff' : '#999', border: isCustomActive ? '0.5px solid #1c1f2e' : '0.5px solid #ddd', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
+            {isCustomActive ? `${customFrom} → ${customTo}` : 'Custom'}
+          </button>
+          {showCustom && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '4px' }}>
+              <input type="date" value={customFrom} max={today} onChange={e => setCustomFrom(e.target.value)}
+                style={{ fontSize: '12px', padding: '3px 8px', border: '0.5px solid #ddd', borderRadius: '4px', fontFamily: 'inherit', color: '#1a1a1a', background: '#fff', outline: 'none' }} />
+              <span style={{ fontSize: '11px', color: '#bbb' }}>to</span>
+              <input type="date" value={customTo} min={customFrom} max={today} onChange={e => setCustomTo(e.target.value)}
+                style={{ fontSize: '12px', padding: '3px 8px', border: '0.5px solid #ddd', borderRadius: '4px', fontFamily: 'inherit', color: '#1a1a1a', background: '#fff', outline: 'none' }} />
+              <button onClick={applyCustom} disabled={!customFrom || !customTo} style={{ background: '#1c1f2e', border: 'none', color: '#fff', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: customFrom && customTo ? 'pointer' : 'default', fontFamily: 'inherit', opacity: customFrom && customTo ? 1 : 0.4 }}>
+                Apply
+              </button>
+            </div>
+          )}
         </div>
 
         {/* KPIs */}
