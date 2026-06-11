@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
   try {
     const { orders } = await shopifyFetch(
-      `orders.json?status=any&created_at_min=${since}&created_at_max=${until}&limit=250&fields=id,created_at,total_price,discount_codes,line_items,referring_site,customer`
+      `orders.json?status=any&created_at_min=${since}&created_at_max=${until}&limit=250&fields=id,created_at,total_price,discount_codes,line_items,referring_site,customer,billing_address`
     );
 
     const filtered = orders.filter(order => {
@@ -86,7 +86,7 @@ export default async function handler(req, res) {
 
     function buildGiftOrderList(giftOrders) {
       return giftOrders.map(order => ({
-        name: order.customer_name || 'Guest',
+        name: order.customer ? `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim() || 'Guest' : (order.billing_address ? `${order.billing_address.first_name || ''} ${order.billing_address.last_name || ''}`.trim() : 'Guest'),
         date: new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         items: (order.line_items || []).map(item => item.quantity > 1 ? `${item.title} ×${item.quantity}` : item.title).join(', ')
       }));
