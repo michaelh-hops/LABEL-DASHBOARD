@@ -14,9 +14,11 @@ const SEED = {
     { title: 'LOS YORK Camera Club Tee', units: 1, revenue: 50 },
   ],
   referrers: [
-    { source: 'Direct', orders: 14, revenue: 60 },
-    { source: 'Search', orders: 5, revenue: 65 },
-    { source: 'Social', orders: 3, revenue: 200 },
+    { source: 'Direct', orders: 14, revenue: 60, platform: 'direct' },
+    { source: 'Google', orders: 4, revenue: 55, platform: 'google' },
+    { source: 'Instagram', orders: 2, revenue: 120, platform: 'instagram' },
+    { source: 'Pinterest', orders: 1, revenue: 55, platform: 'pinterest' },
+    { source: 'TikTok', orders: 1, revenue: 25, platform: 'tiktok' },
   ],
   inventory: {
     low_stock: [
@@ -37,6 +39,22 @@ const SEED = {
   updated_at: new Date().toISOString(),
 };
 
+const PLATFORM_STYLES = {
+  instagram: { bg: '#fce4ec', color: '#e1306c', icon: '📷' },
+  pinterest: { bg: '#fce8e8', color: '#e60023', icon: '📌' },
+  tiktok:    { bg: '#f0faf0', color: '#010101', icon: '♪' },
+  facebook:  { bg: '#e8f0fe', color: '#1877f2', icon: 'f' },
+  twitter:   { bg: '#e8f5fd', color: '#1da1f2', icon: '𝕏' },
+  google:    { bg: '#e8f0fe', color: '#4285f4', icon: 'G' },
+  search:    { bg: '#e8f0fe', color: '#4285f4', icon: '🔍' },
+  direct:    { bg: '#f0f0ec', color: '#888', icon: '→' },
+  referral:  { bg: '#f5f0fe', color: '#7c3aed', icon: '↗' },
+};
+
+function getPlatformStyle(platform) {
+  return PLATFORM_STYLES[platform?.toLowerCase()] || PLATFORM_STYLES.direct;
+}
+
 function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 }
@@ -48,6 +66,29 @@ function timeAgo(iso) {
   if (m < 60) return `${m}m ago`;
   return `${Math.floor(m / 60)}h ago`;
 }
+
+const S = {
+  wrap: { fontFamily: "'Inter', 'Helvetica Neue', sans-serif", background: '#f5f5f2', minHeight: '100vh', color: '#1a1a1a' },
+  header: { background: '#1c1f2e', padding: '13px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
+  logoText: { fontWeight: 600, fontSize: '12px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#fff' },
+  logoSub: { fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#4a5070', marginLeft: '10px' },
+  livePill: { fontSize: '10px', background: 'rgba(52,199,89,0.12)', color: '#34c759', border: '0.5px solid rgba(52,199,89,0.25)', padding: '3px 8px', borderRadius: '20px' },
+  refreshBtn: { fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '4px 12px', cursor: 'pointer', background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: '4px', color: '#8890b0', fontFamily: 'inherit' },
+  timebar: { background: '#fff', padding: '10px 24px', borderBottom: '0.5px solid #e8e8e4', display: 'flex', alignItems: 'center', gap: '7px' },
+  timeLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginRight: '4px' },
+  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', background: '#fff', borderBottom: '0.5px solid #e8e8e4' },
+  kpiCard: { padding: '18px 24px', borderRight: '0.5px solid #e8e8e4' },
+  kpiLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '6px' },
+  kpiVal: { fontSize: '26px', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, color: '#1c1f2e' },
+  kpiSub: { fontSize: '10px', color: '#ccc', marginTop: '4px' },
+  tabs: { background: '#fff', display: 'flex', padding: '0 24px', borderBottom: '0.5px solid #e8e8e4' },
+  content: { padding: '20px 24px 40px' },
+  secLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '10px' },
+  tbl: { background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '8px', overflow: 'hidden' },
+  thead: { display: 'grid', padding: '9px 16px', borderBottom: '0.5px solid #f0f0ec', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' },
+  trow: { display: 'grid', padding: '11px 16px', borderBottom: '0.5px solid #f5f5f2', alignItems: 'center' },
+  ttotal: { display: 'grid', padding: '11px 16px', borderTop: '0.5px solid #e8e8e4', background: '#fafaf8', fontWeight: 600, fontSize: '12px', color: '#1c1f2e' },
+};
 
 export default function Dashboard() {
   const [days, setDays] = useState(7);
@@ -65,134 +106,149 @@ export default function Dashboard() {
       const res = await fetch(`/api/shopify?days=${d}`);
       const json = await res.json();
       if (json.ok) { setData(json); setIsLive(true); }
-    } catch (e) { console.warn('Using seed data:', e.message); }
+    } catch (e) { console.warn('Using seed data'); }
     setLoading(false);
   }, []);
 
   useEffect(() => {
     fetchData(days);
-    const interval = setInterval(() => fetchData(days), 10 * 60 * 1000);
-    return () => clearInterval(interval);
+    const iv = setInterval(() => fetchData(days), 10 * 60 * 1000);
+    return () => clearInterval(iv);
   }, [days, fetchData]);
-
-  function handleSetDays(d) { setDays(d); fetchData(d); }
-
-  function saveReaktion() {
-    setReaktion({ ...rDraft, updated_at: new Date().toISOString() });
-    setEditingR(false);
-  }
 
   const s = data?.summary || {};
   const products = data?.products || [];
   const referrers = data?.referrers || [];
   const lowStock = data?.inventory?.low_stock || [];
   const mostMoved = data?.inventory?.most_moved || [];
-  const totalReferralOrders = referrers.reduce((sum, r) => sum + r.orders, 0);
+
+  const tabBtn = (t, label) => (
+    <button key={t} onClick={() => setTab(t)} style={{ background: 'none', border: 'none', borderBottom: tab === t ? '2px solid #1c1f2e' : '2px solid transparent', color: tab === t ? '#1c1f2e' : '#aaa', padding: '9px 14px', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', marginBottom: '-0.5px', fontFamily: 'inherit', transition: 'color .15s' }}>
+      {label}
+    </button>
+  );
+
+  const pillBtn = (d) => (
+    <button key={d} onClick={() => { setDays(d); fetchData(d); }} style={{ background: days === d ? '#1c1f2e' : 'none', color: days === d ? '#fff' : '#999', border: days === d ? '0.5px solid #1c1f2e' : '0.5px solid #ddd', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
+      {d === 7 ? 'Last 7 days' : d === 14 ? 'Last 14 days' : d === 30 ? 'Last 30 days' : 'Last 90 days'}
+    </button>
+  );
 
   return (
     <>
-      <Head><title>Los York Label — Operations</title></Head>
-      <div style={{ fontFamily: "'Inter', sans-serif", background: '#0a0a0a', color: '#f0f0f0', minHeight: '100vh' }}>
+      <Head>
+        <title>Los York Label — Operations</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+      </Head>
+      <div style={S.wrap}>
 
-        <div style={{ borderBottom: '1px solid #1c1c1c', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: '#0a0a0a', zIndex: 10 }}>
+        {/* Header */}
+        <div style={S.header}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={S.logoText}>Los York</span>
+            <span style={{ color: '#2a2d40', margin: '0 6px' }}>®</span>
+            <span style={S.logoSub}>Label / Operations</span>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontWeight: 800, fontSize: '12px', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Los York</span>
-            <span style={{ color: '#333', fontSize: '12px' }}>®</span>
-            <span style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#444' }}>Label / Operations</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {isLive && <span style={{ fontSize: '10px', background: '#0a2a0a', color: '#44cc66', border: '1px solid #1a4a1a', padding: '3px 8px', borderRadius: '20px' }}>● LIVE</span>}
-            <span style={{ fontSize: '11px', color: '#444' }}>{loading ? 'Refreshing...' : `Updated ${timeAgo(data?.updated_at)} · auto-refresh 10m`}</span>
-            <button onClick={() => fetchData(days)} disabled={loading} style={{ background: 'none', border: '1px solid #2a2a2a', color: '#666', padding: '5px 12px', fontSize: '11px', cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{loading ? '...' : 'Refresh'}</button>
+            {isLive && <span style={S.livePill}>● live</span>}
+            <span style={{ fontSize: '11px', color: '#4a5070' }}>{loading ? 'Refreshing...' : `Updated ${timeAgo(data?.updated_at)} · auto-refresh 10m`}</span>
+            <button onClick={() => fetchData(days)} disabled={loading} style={S.refreshBtn}>{loading ? '...' : '↻ Refresh'}</button>
           </div>
         </div>
 
-        <div style={{ padding: '12px 24px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#444', marginRight: '4px' }}>Showing:</span>
-          {[7, 14, 30, 90].map(d => (
-            <button key={d} onClick={() => handleSetDays(d)} style={{ background: days === d ? '#fff' : 'none', color: days === d ? '#000' : '#555', border: days === d ? '1px solid #fff' : '1px solid #2a2a2a', padding: '4px 12px', fontSize: '11px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'inherit' }}>
-              {d === 7 ? 'Last 7 days' : d === 14 ? 'Last 14 days' : d === 30 ? 'Last 30 days' : 'Last 90 days'}
-            </button>
-          ))}
+        {/* Time bar */}
+        <div style={S.timebar}>
+          <span style={S.timeLabel}>Showing:</span>
+          {[7, 14, 30, 90].map(pillBtn)}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', margin: '16px 24px 0', background: '#1c1c1c', border: '1px solid #1c1c1c', borderRadius: '6px', overflow: 'hidden' }}>
+        {/* KPIs */}
+        <div style={S.kpiGrid}>
           {[
             { label: 'Gross Revenue', value: s.gross_revenue != null ? fmt(s.gross_revenue) : '—', sub: 'excl. discount codes (except WELCOME)' },
             { label: 'Total Orders', value: s.total_orders ?? '—', sub: 'excl. discount codes (except WELCOME)' },
             { label: 'Units Sold', value: s.total_units ?? '—', sub: `last ${days} days` },
           ].map((k, i) => (
-            <div key={i} style={{ background: '#0f0f0f', padding: '18px 22px' }}>
-              <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: '7px' }}>{k.label}</div>
-              <div style={{ fontSize: '28px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1, color: loading ? '#444' : '#fff' }}>{k.value}</div>
-              <div style={{ fontSize: '10px', color: '#333', marginTop: '5px' }}>{k.sub}</div>
+            <div key={i} style={{ ...S.kpiCard, borderRight: i < 2 ? '0.5px solid #e8e8e4' : 'none' }}>
+              <div style={S.kpiLabel}>{k.label}</div>
+              <div style={{ ...S.kpiVal, color: loading ? '#ccc' : '#1c1f2e' }}>{k.value}</div>
+              <div style={S.kpiSub}>{k.sub}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ display: 'flex', margin: '18px 24px 0', borderBottom: '1px solid #1c1c1c' }}>
-          {['sales', 'inventory', 'traffic', 'ads'].map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{ background: 'none', border: 'none', borderBottom: tab === t ? '2px solid #fff' : '2px solid transparent', color: tab === t ? '#fff' : '#444', padding: '8px 16px', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', marginBottom: '-1px', fontFamily: 'inherit' }}>{t}</button>
-          ))}
+        {/* Tabs */}
+        <div style={{ ...S.tabs }}>
+          {[['sales','Sales'],['inventory','Inventory'],['traffic','Traffic'],['ads','Ads']].map(([t,l]) => tabBtn(t,l))}
         </div>
 
-        <div style={{ padding: '20px 24px 48px' }}>
+        {/* Content */}
+        <div style={S.content}>
 
+          {/* SALES */}
           {tab === 'sales' && (
             <div>
-              <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#444', marginBottom: '12px' }}>Product Sales — Last {days} days</div>
-              <div style={{ background: '#0f0f0f', border: '1px solid #1c1c1c', borderRadius: '6px', overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px', padding: '10px 18px', borderBottom: '1px solid #1c1c1c', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#444' }}>
+              <div style={S.secLabel}>Product sales — last {days} days</div>
+              <div style={S.tbl}>
+                <div style={{ ...S.thead, gridTemplateColumns: '1fr 70px 90px' }}>
                   <span>Product</span><span style={{ textAlign: 'right' }}>Units</span><span style={{ textAlign: 'right' }}>Revenue</span>
                 </div>
                 {products.map((p, i) => (
-                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px', padding: '12px 18px', borderBottom: i < products.length - 1 ? '1px solid #141414' : 'none', alignItems: 'center' }}>
-                    <span style={{ fontSize: '13px', color: '#ddd' }}>{p.title}</span>
-                    <span style={{ textAlign: 'right', fontSize: '13px', color: '#666' }}>{p.units}</span>
-                    <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 600, color: '#fff' }}>{fmt(p.revenue)}</span>
+                  <div key={i} style={{ ...S.trow, gridTemplateColumns: '1fr 70px 90px', borderBottom: i < products.length - 1 ? '0.5px solid #f5f5f2' : 'none' }}>
+                    <span style={{ fontSize: '13px', color: '#2a2a2a' }}>{p.title}</span>
+                    <span style={{ textAlign: 'right', fontSize: '13px', color: '#999' }}>{p.units}</span>
+                    <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 600, color: '#1c1f2e' }}>{fmt(p.revenue)}</span>
                   </div>
                 ))}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px', padding: '12px 18px', borderTop: '1px solid #2a2a2a', background: '#141414' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#777' }}>Total</span>
-                  <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#fff' }}>{products.reduce((s, p) => s + p.units, 0)}</span>
-                  <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#fff' }}>{fmt(products.reduce((s, p) => s + p.revenue, 0))}</span>
+                <div style={{ ...S.ttotal, gridTemplateColumns: '1fr 70px 90px' }}>
+                  <span>Total</span>
+                  <span style={{ textAlign: 'right' }}>{products.reduce((s, p) => s + p.units, 0)}</span>
+                  <span style={{ textAlign: 'right' }}>{fmt(products.reduce((s, p) => s + p.revenue, 0))}</span>
                 </div>
               </div>
-              <div style={{ fontSize: '11px', color: '#333', marginTop: '8px' }}>All discount codes excluded · WELCOME code orders included at discounted price</div>
+              <div style={{ fontSize: '11px', color: '#ccc', marginTop: '8px' }}>All discount codes excluded · WELCOME code orders included at discounted price</div>
             </div>
           )}
 
+          {/* INVENTORY */}
           {tab === 'inventory' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div>
-                <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#444', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '7px' }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff4444', display: 'inline-block' }} />Low Stock — Under 5 Units
+                <div style={{ ...S.secLabel, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d94f4f', display: 'inline-block' }} />
+                  Low stock — under 5 units
                 </div>
-                <div style={{ background: '#0f0f0f', border: '1px solid #1c1c1c', borderRadius: '6px', overflow: 'hidden' }}>
+                <div style={S.tbl}>
                   {lowStock.map((item, i) => (
-                    <div key={i} style={{ padding: '12px 18px', borderBottom: i < lowStock.length - 1 ? '1px solid #141414' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 16px', borderBottom: i < lowStock.length - 1 ? '0.5px solid #f5f5f2' : 'none' }}>
                       <div>
-                        <div style={{ fontSize: '13px', color: '#ddd' }}>{item.title}</div>
-                        {item.variant && <div style={{ fontSize: '11px', color: '#444', marginTop: '2px' }}>{item.variant}</div>}
+                        <div style={{ fontSize: '13px', color: '#2a2a2a' }}>{item.title}</div>
+                        {item.variant && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{item.variant}</div>}
                       </div>
-                      <span style={{ fontSize: '16px', fontWeight: 700, color: item.units <= 2 ? '#ff4444' : '#ff9944', background: item.units <= 2 ? '#1a0000' : '#1a0d00', padding: '2px 8px', borderRadius: '4px' }}>{item.units}</span>
+                      <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: item.units <= 2 ? '#fef0f0' : '#fef8ec', color: item.units <= 2 ? '#d94f4f' : '#b07d1a' }}>
+                        {item.units} left
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#444', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '7px' }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#44cc66', display: 'inline-block' }} />Most Moved — Last {days} Days
+                <div style={{ ...S.secLabel, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34c759', display: 'inline-block' }} />
+                  Most moved — last {days} days
                 </div>
-                <div style={{ background: '#0f0f0f', border: '1px solid #1c1c1c', borderRadius: '6px', overflow: 'hidden' }}>
+                <div style={S.tbl}>
                   {mostMoved.map((item, i) => (
-                    <div key={i} style={{ padding: '12px 18px', borderBottom: i < mostMoved.length - 1 ? '1px solid #141414' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 16px', borderBottom: i < mostMoved.length - 1 ? '0.5px solid #f5f5f2' : 'none' }}>
                       <div>
-                        <div style={{ fontSize: '13px', color: '#ddd' }}>{item.title}</div>
-                        {item.variant && <div style={{ fontSize: '11px', color: '#444', marginTop: '2px' }}>{item.variant}</div>}
-                        <div style={{ fontSize: '10px', color: '#333', marginTop: '2px' }}>{item.remaining} remaining</div>
+                        <div style={{ fontSize: '13px', color: '#2a2a2a' }}>{item.title}</div>
+                        {item.variant && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>{item.variant}</div>}
+                        <div style={{ fontSize: '10px', color: '#ccc', marginTop: '2px' }}>{item.remaining} remaining</div>
                       </div>
-                      <span style={{ fontSize: '16px', fontWeight: 700, color: '#44cc66', background: '#001a07', padding: '2px 8px', borderRadius: '4px' }}>{item.units_sold}</span>
+                      <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: '#f0faf3', color: '#1a7a3a' }}>
+                        {item.units_sold} sold
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -200,25 +256,27 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* TRAFFIC */}
           {tab === 'traffic' && (
-            <div>
-              <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#444', marginBottom: '12px' }}>Order Sources — Last {days} days</div>
-              <div style={{ background: '#0f0f0f', border: '1px solid #1c1c1c', borderRadius: '6px', overflow: 'hidden', maxWidth: '460px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 100px', padding: '10px 18px', borderBottom: '1px solid #1c1c1c', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#444' }}>
-                  <span>Source</span><span style={{ textAlign: 'right' }}>Orders</span><span style={{ textAlign: 'right' }}>Revenue</span>
-                </div>
+            <div style={{ maxWidth: '480px' }}>
+              <div style={S.secLabel}>Order sources — last {days} days</div>
+              <div style={S.tbl}>
                 {referrers.map((r, i) => {
-                  const pct = totalReferralOrders > 0 ? Math.round((r.orders / totalReferralOrders) * 100) : 0;
-                  const barColor = r.source === 'Social' ? '#44cc66' : r.source === 'Search' ? '#4488ff' : '#555';
+                  const ps = getPlatformStyle(r.platform || r.source);
                   return (
-                    <div key={i} style={{ padding: '14px 18px', borderBottom: i < referrers.length - 1 ? '1px solid #141414' : 'none' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 100px', alignItems: 'center', marginBottom: '7px' }}>
-                        <span style={{ fontSize: '13px', color: '#ddd' }}>{r.source}</span>
-                        <span style={{ textAlign: 'right', fontSize: '13px', color: '#666' }}>{r.orders}</span>
-                        <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 600, color: '#fff' }}>{fmt(r.revenue)}</span>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: i < referrers.length - 1 ? '0.5px solid #f5f5f2' : 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: ps.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: ps.color, fontWeight: 600, flexShrink: 0 }}>
+                          {ps.icon}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '13px', color: '#2a2a2a', fontWeight: 500 }}>{r.source}</div>
+                          <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px' }}>{fmt(r.revenue)} revenue</div>
+                        </div>
                       </div>
-                      <div style={{ height: '2px', background: '#1c1c1c', borderRadius: '1px' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: barColor, borderRadius: '1px' }} />
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '15px', fontWeight: 600, color: '#1c1f2e' }}>{r.orders}</div>
+                        <div style={{ fontSize: '10px', color: '#bbb' }}>orders</div>
                       </div>
                     </div>
                   );
@@ -227,36 +285,45 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ADS */}
           {tab === 'ads' && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                 <div>
-                  <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#444' }}>Reaktion — Ad Metrics</div>
-                  {reaktion?.updated_at && <div style={{ fontSize: '11px', color: '#333', marginTop: '3px' }}>Updated {timeAgo(reaktion.updated_at)}{reaktion.name ? ` by ${reaktion.name}` : ''}</div>}
+                  <div style={S.secLabel}>Reaktion — Ad Metrics</div>
+                  {reaktion?.updated_at && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '-6px' }}>Updated {timeAgo(reaktion.updated_at)}{reaktion.name ? ` by ${reaktion.name}` : ''}</div>}
                 </div>
-                <button onClick={() => { setRDraft(reaktion || {}); setEditingR(!editingR); }} style={{ background: 'none', border: '1px solid #2a2a2a', color: '#666', padding: '5px 12px', fontSize: '11px', cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{editingR ? 'Cancel' : 'Update'}</button>
+                <button onClick={() => { setRDraft(reaktion || {}); setEditingR(!editingR); }} style={{ background: 'none', border: '0.5px solid #ddd', color: '#888', padding: '5px 12px', fontSize: '11px', cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {editingR ? 'Cancel' : 'Update'}
+                </button>
               </div>
+
               {editingR ? (
-                <div style={{ background: '#0f0f0f', border: '1px solid #2a2a2a', borderRadius: '6px', padding: '20px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '14px' }}>
-                    {[['spend', 'Ad Spend ($)'], ['roas', 'ROAS'], ['impressions', 'Impressions'], ['clicks', 'Clicks'], ['ctr', 'CTR (%)'], ['cpa', 'CPA ($)']].map(([key, label]) => (
+                <div style={{ background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '8px', padding: '20px' }}>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '16px' }}>Enter this week's Reaktion numbers</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '14px', marginBottom: '14px' }}>
+                    {[['spend','Ad Spend ($)'],['roas','ROAS'],['impressions','Impressions'],['clicks','Clicks'],['ctr','CTR (%)'],['cpa','CPA ($)']].map(([key, label]) => (
                       <div key={key}>
-                        <label style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444', display: 'block', marginBottom: '5px' }}>{label}</label>
-                        <input type="number" value={rDraft[key] || ''} onChange={e => setRDraft(d => ({ ...d, [key]: e.target.value }))} style={{ background: '#141414', border: '1px solid #2a2a2a', color: '#fff', padding: '7px 10px', fontSize: '13px', width: '100%', borderRadius: '4px', outline: 'none', fontFamily: 'inherit' }} />
+                        <label style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', display: 'block', marginBottom: '5px' }}>{label}</label>
+                        <input type="number" value={rDraft[key] || ''} onChange={e => setRDraft(d => ({ ...d, [key]: e.target.value }))}
+                          style={{ width: '100%', fontSize: '13px', fontFamily: 'inherit', border: '0.5px solid #ddd', borderRadius: '4px', padding: '7px 10px', background: '#fafaf8', color: '#1a1a1a', outline: 'none' }} />
                       </div>
                     ))}
                   </div>
                   <div style={{ marginBottom: '14px' }}>
-                    <label style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444', display: 'block', marginBottom: '5px' }}>Your Name</label>
-                    <input type="text" placeholder="e.g. Mike" value={rDraft.name || ''} onChange={e => setRDraft(d => ({ ...d, name: e.target.value }))} style={{ background: '#141414', border: '1px solid #2a2a2a', color: '#fff', padding: '7px 10px', fontSize: '13px', width: '200px', borderRadius: '4px', outline: 'none', fontFamily: 'inherit' }} />
+                    <label style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', display: 'block', marginBottom: '5px' }}>Your Name</label>
+                    <input type="text" placeholder="e.g. Mike" value={rDraft.name || ''} onChange={e => setRDraft(d => ({ ...d, name: e.target.value }))}
+                      style={{ fontSize: '13px', fontFamily: 'inherit', border: '0.5px solid #ddd', borderRadius: '4px', padding: '7px 10px', width: '200px', background: '#fafaf8', color: '#1a1a1a', outline: 'none' }} />
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={saveReaktion} style={{ background: '#fff', border: 'none', color: '#000', padding: '7px 18px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Save</button>
-                    <button onClick={() => setEditingR(false)} style={{ background: 'none', border: '1px solid #2a2a2a', color: '#555', padding: '7px 18px', fontSize: '11px', cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Cancel</button>
+                    <button onClick={() => { setReaktion({ ...rDraft, updated_at: new Date().toISOString() }); setEditingR(false); }}
+                      style={{ background: '#1c1f2e', border: 'none', color: '#fff', padding: '7px 18px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Save</button>
+                    <button onClick={() => setEditingR(false)}
+                      style={{ background: 'none', border: '0.5px solid #ddd', color: '#888', padding: '7px 18px', fontSize: '11px', cursor: 'pointer', borderRadius: '4px', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Cancel</button>
                   </div>
                 </div>
               ) : reaktion ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#1c1c1c', border: '1px solid #1c1c1c', borderRadius: '6px', overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: '#e8e8e4', border: '0.5px solid #e8e8e4', borderRadius: '8px', overflow: 'hidden' }}>
                   {[
                     { label: 'Ad Spend', value: `$${Number(reaktion.spend).toLocaleString()}` },
                     { label: 'ROAS', value: reaktion.roas },
@@ -265,29 +332,30 @@ export default function Dashboard() {
                     { label: 'CTR', value: `${reaktion.ctr}%` },
                     { label: 'CPA', value: `$${reaktion.cpa}` },
                   ].map((k, i) => (
-                    <div key={i} style={{ background: '#0f0f0f', padding: '18px 22px' }}>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: '7px' }}>{k.label}</div>
-                      <div style={{ fontSize: '24px', fontWeight: 700, color: '#fff' }}>{k.value}</div>
+                    <div key={i} style={{ background: '#fff', padding: '18px 20px' }}>
+                      <div style={S.kpiLabel}>{k.label}</div>
+                      <div style={{ fontSize: '22px', fontWeight: 600, color: '#1c1f2e' }}>{k.value}</div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ background: '#0f0f0f', border: '1px solid #1c1c1c', borderRadius: '6px', padding: '40px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '13px', color: '#444', marginBottom: '6px' }}>No ad data yet</div>
-                  <div style={{ fontSize: '11px', color: '#333' }}>Hit Update to add this week's Reaktion numbers</div>
+                <div style={{ background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '8px', padding: '40px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '13px', color: '#bbb', marginBottom: '6px' }}>No ad data yet</div>
+                  <div style={{ fontSize: '11px', color: '#ddd' }}>Hit Update to add this week's Reaktion numbers</div>
                 </div>
               )}
-              <div style={{ marginTop: '16px', padding: '12px 16px', background: '#0a0a0a', border: '1px solid #141414', borderRadius: '4px', fontSize: '11px', color: '#333', lineHeight: 1.6 }}>
-                Reaktion has no public API — enter manually from <span style={{ color: '#444' }}>advertiser.reaktion.com</span> (~2 min weekly)
+
+              <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '6px', fontSize: '11px', color: '#bbb', lineHeight: 1.6 }}>
+                Reaktion has no public API — enter manually from <span style={{ color: '#888' }}>advertiser.reaktion.com</span> (~2 min weekly)
               </div>
             </div>
           )}
 
         </div>
 
-        <div style={{ borderTop: '1px solid #141414', padding: '12px 24px', display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#2a2a2a' }}>Los York Label · Internal Use Only</span>
-          <span style={{ fontSize: '10px', color: '#2a2a2a' }}>losyorklabel.com</span>
+        <div style={{ borderTop: '0.5px solid #e8e8e4', padding: '12px 24px', display: 'flex', justifyContent: 'space-between', background: '#fff' }}>
+          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc' }}>Los York Label · Internal Use Only</span>
+          <span style={{ fontSize: '10px', color: '#ccc' }}>losyorklabel.com</span>
         </div>
 
       </div>
