@@ -31,11 +31,12 @@ function getPlatform(ref) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=60');
   const days = parseInt(req.query.days) || 7;
-  const since = getDaysAgo(days);
+  const since = req.query.from ? new Date(req.query.from).toISOString() : getDaysAgo(days);
+  const until = req.query.to ? new Date(new Date(req.query.to).getTime() + 86400000).toISOString() : new Date().toISOString();
 
   try {
     const { orders } = await shopifyFetch(
-      `orders.json?status=any&created_at_min=${since}&limit=250&fields=id,created_at,total_price,discount_codes,line_items,referring_site`
+      `orders.json?status=any&created_at_min=${since}&created_at_max=${until}&limit=250&fields=id,created_at,total_price,discount_codes,line_items,referring_site`
     );
 
     const filtered = orders.filter(order => {
