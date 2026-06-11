@@ -350,29 +350,60 @@ export default function Dashboard() {
 
           {/* TRAFFIC */}
           {tab === 'traffic' && (
-            <div style={{ maxWidth: '480px' }}>
-              <div style={S.secLabel}>Order sources — last {days} days</div>
-              <div style={{ ...S.tbl, border: '1.5px solid #e0e0e0', borderRadius: '0' }}>
-                {referrers.map((r, i) => {
-                  const ps = getPlatformStyle(r.platform || r.source);
+            <div>
+              <div style={S.secLabel}>Order sources</div>
+              <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', overflow: 'hidden' }}>
+                {/* Table header */}
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 80px 80px 100px 100px', padding: '10px 18px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', fontWeight: 600, background: '#fafafa' }}>
+                  <span>Source</span>
+                  <span style={{ textAlign: 'right' }}>Orders</span>
+                  <span style={{ textAlign: 'right' }}>Share</span>
+                  <span style={{ textAlign: 'right' }}>Revenue</span>
+                  <span style={{ textAlign: 'right' }}>Per order</span>
+                </div>
+                {(() => {
+                  const totalOrders = referrers.reduce((s, r) => s + r.orders, 0);
+                  const totalRevenue = referrers.reduce((s, r) => s + r.revenue, 0);
+                  const barColors = { instagram: '#e1306c', pinterest: '#e60023', tiktok: '#010101', facebook: '#1877f2', twitter: '#1da1f2', google: '#4285f4', search: '#4285f4', direct: '#1a1a1a', referral: '#7c3aed' };
+                  return referrers.map((r, i) => {
+                    const ps = getPlatformStyle(r.platform || r.source);
+                    const sharePct = totalOrders > 0 ? Math.round((r.orders / totalOrders) * 100) : 0;
+                    const perOrder = r.orders > 0 ? Math.round(r.revenue / r.orders * 100) / 100 : 0;
+                    const barColor = barColors[r.platform?.toLowerCase()] || barColors[r.source?.toLowerCase()] || '#888';
+                    return (
+                      <div key={i} style={{ padding: '14px 18px', borderBottom: i < referrers.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 80px 80px 100px 100px', alignItems: 'center', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: ps.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: ps.color, fontWeight: 700, flexShrink: 0 }}>{ps.icon}</div>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#1a1a1a' }}>{r.source}</span>
+                          </div>
+                          <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{r.orders}</span>
+                          <span style={{ textAlign: 'right', fontSize: '13px', color: '#999', fontWeight: 500 }}>{sharePct}%</span>
+                          <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{fmt(r.revenue)}</span>
+                          <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{fmt(perOrder)}</span>
+                        </div>
+                        <div style={{ height: '3px', background: '#f0f0f0', borderRadius: '2px' }}>
+                          <div style={{ height: '3px', width: `${sharePct}%`, background: barColor, borderRadius: '2px', transition: 'width 0.4s ease' }} />
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+                {/* Total row */}
+                {(() => {
+                  const totalOrders = referrers.reduce((s, r) => s + r.orders, 0);
+                  const totalRevenue = referrers.reduce((s, r) => s + r.revenue, 0);
+                  const blendedPerOrder = totalOrders > 0 ? Math.round(totalRevenue / totalOrders * 100) / 100 : 0;
                   return (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: i < referrers.length - 1 ? '0.5px solid #f5f5f2' : 'none' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: ps.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: ps.color, fontWeight: 600, flexShrink: 0 }}>
-                          {ps.icon}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', fontWeight: 500 }}>{r.source}</div>
-                          <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px' }}>{fmt(r.revenue)} revenue</div>
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '15px', fontWeight: 600, color: '#1c1f2e' }}>{r.orders}</div>
-                        <div style={{ fontSize: '10px', color: '#bbb' }}>orders</div>
-                      </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 80px 80px 100px 100px', padding: '12px 18px', borderTop: '2px solid #e0e0e0', background: '#fafafa', fontSize: '12px', fontWeight: 800, color: '#1a1a1a' }}>
+                      <span>Total</span>
+                      <span style={{ textAlign: 'right' }}>{totalOrders}</span>
+                      <span style={{ textAlign: 'right' }}></span>
+                      <span style={{ textAlign: 'right' }}>{fmt(totalRevenue)}</span>
+                      <span style={{ textAlign: 'right' }}>{fmt(blendedPerOrder)}</span>
                     </div>
                   );
-                })}
+                })()}
               </div>
             </div>
           )}
