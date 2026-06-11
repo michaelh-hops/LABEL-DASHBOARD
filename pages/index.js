@@ -71,20 +71,20 @@ function timeAgo(iso) {
 }
 
 const S = {
-  wrap: { fontFamily: "'Inter', 'Helvetica Neue', sans-serif", background: '#f5f5f2', minHeight: '100vh', color: '#1a1a1a' },
+  wrap: { fontFamily: "'Inter', 'Helvetica Neue', sans-serif", background: '#f7f7f7', minHeight: '100vh', color: '#1a1a1a' },
   header: { background: '#1c1f2e', padding: '13px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
   logoText: { fontWeight: 600, fontSize: '12px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#fff' },
   logoSub: { fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#4a5070', marginLeft: '10px' },
   livePill: { fontSize: '10px', background: 'rgba(52,199,89,0.12)', color: '#34c759', border: '0.5px solid rgba(52,199,89,0.25)', padding: '3px 8px', borderRadius: '20px' },
   refreshBtn: { fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '4px 12px', cursor: 'pointer', background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: '4px', color: '#8890b0', fontFamily: 'inherit' },
-  timebar: { background: '#fff', padding: '10px 24px', borderBottom: '0.5px solid #e8e8e4', display: 'flex', alignItems: 'center', gap: '7px' },
+  timebar: { background: '#fff', padding: '10px 24px', borderBottom: '0.5px solid #ebebeb', display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' },
   timeLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginRight: '4px' },
-  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', background: '#fff', borderBottom: '0.5px solid #e8e8e4' },
-  kpiCard: { padding: '18px 24px', borderRight: '0.5px solid #e8e8e4' },
+  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: '#ebebeb' },
+  kpiCard: { padding: '24px 24px 22px', background: '#fff' },
   kpiLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '6px' },
   kpiVal: { fontSize: '26px', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, color: '#1c1f2e' },
   kpiSub: { fontSize: '10px', color: '#ccc', marginTop: '4px' },
-  tabs: { background: '#fff', display: 'flex', padding: '0 24px', borderBottom: '0.5px solid #e8e8e4' },
+  tabs: { background: '#fff', display: 'flex', gap: '4px', padding: '14px 24px', borderBottom: '0.5px solid #ebebeb', borderTop: '0.5px solid #ebebeb', marginTop: '1px' },
   content: { padding: '20px 24px 40px' },
   secLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '10px' },
   tbl: { background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '8px', overflow: 'hidden' },
@@ -157,7 +157,7 @@ export default function Dashboard() {
   const mostMoved = data?.inventory?.most_moved || [];
 
   const tabBtn = (t, label) => (
-    <button key={t} onClick={() => setTab(t)} style={{ background: 'none', border: 'none', borderBottom: tab === t ? '2px solid #1c1f2e' : '2px solid transparent', color: tab === t ? '#1c1f2e' : '#aaa', padding: '9px 14px', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', marginBottom: '-0.5px', fontFamily: 'inherit', transition: 'color .15s' }}>
+    <button key={t} onClick={() => setTab(t)} style={{ background: tab === t ? '#2c2c2c' : 'none', border: '1px solid', borderColor: tab === t ? '#2c2c2c' : '#e0e0e0', color: tab === t ? '#fff' : '#aaa', padding: '7px 18px', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '3px', fontFamily: 'inherit', transition: 'all .15s' }}>
       {label}
     </button>
   );
@@ -196,7 +196,6 @@ export default function Dashboard() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {isLive && <span style={S.livePill}>● live</span>}
-            <span style={{ fontSize: '11px', color: '#4a5070' }}>{loading ? 'Refreshing...' : `Updated ${timeAgo(data?.updated_at)} · auto-refresh 10m`}</span>
             <button onClick={() => fetchData(days)} disabled={loading} style={S.refreshBtn}>{loading ? '...' : '↻ Refresh'}</button>
           </div>
         </div>
@@ -225,15 +224,15 @@ export default function Dashboard() {
         {/* KPIs */}
         <div style={S.kpiGrid}>
           {[
-            { label: 'Gross Revenue', value: s.gross_revenue != null ? fmt(s.gross_revenue) : '—', sub: 'excl. discount codes (except WELCOME)' },
-            { label: 'Total Orders', value: s.total_orders ?? '—', sub: 'excl. discount codes (except WELCOME)' },
-            { label: 'Avg Order Value', value: s.aov != null ? fmt(s.aov) : '—', sub: `last ${days} days` },
-            { label: 'Units Sold', value: s.total_units ?? '—', sub: `last ${days} days` },
+            { label: 'Gross Revenue', value: s.gross_revenue != null ? fmt(s.gross_revenue) : '—', sub: '' },
+            { label: 'Total Orders', value: s.total_orders ?? '—', sub: '' },
+            { label: 'Avg Order Value', value: s.aov != null ? fmt(s.aov) : '—', sub: '' },
+            { label: 'Units Sold', value: s.total_units ?? '—', sub: '' },
           ].map((k, i) => (
-            <div key={i} style={{ ...S.kpiCard, borderRight: i < 3 ? '0.5px solid #e8e8e4' : 'none' }}>
+            <div key={i} style={S.kpiCard}>
               <div style={S.kpiLabel}>{k.label}</div>
               <div style={{ ...S.kpiVal, color: loading ? '#ccc' : '#1c1f2e' }}>{k.value}</div>
-              <div style={S.kpiSub}>{k.sub}</div>
+              {k.sub && <div style={S.kpiSub}>{k.sub}</div>}
             </div>
           ))}
         </div>
@@ -445,7 +444,7 @@ export default function Dashboard() {
 
         </div>
 
-        <div style={{ borderTop: '0.5px solid #e8e8e4', padding: '12px 24px', display: 'flex', justifyContent: 'space-between', background: '#fff' }}>
+        <div style={{ borderTop: '0.5px solid #ebebeb', padding: '12px 24px', display: 'flex', justifyContent: 'space-between', background: '#fff' }}>
           <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc' }}>Los York Label · Internal Use Only</span>
           <span style={{ fontSize: '10px', color: '#ccc' }}>losyorklabel.com</span>
         </div>
