@@ -138,6 +138,42 @@ export default function Dashboard() {
   const [editingR, setEditingR] = useState(false);
   const [clientOpen, setClientOpen] = useState(false);
   const [freelanceOpen, setFreelanceOpen] = useState(false);
+  const [compareA, setCompareA] = useState({ from: '', to: '' });
+  const [compareB, setCompareB] = useState({ from: '', to: '' });
+  const [compareData, setCompareData] = useState(null);
+  const [compareLoading, setCompareLoading] = useState(false);
+
+  async function runCompare() {
+    if (!compareA.from || !compareA.to || !compareB.from || !compareB.to) return;
+    setCompareLoading(true);
+    try {
+      const [resA, resB] = await Promise.all([
+        fetch(`/api/shopify?from=${compareA.from}&to=${compareA.to}`),
+        fetch(`/api/shopify?from=${compareB.from}&to=${compareB.to}`)
+      ]);
+      const [dataA, dataB] = await Promise.all([resA.json(), resB.json()]);
+      if (dataA.ok && dataB.ok) setCompareData({ a: dataA, b: dataB });
+    } catch (e) { console.warn('Compare failed'); }
+    setCompareLoading(false);
+  }
+
+  function pctChange(a, b) {
+    if (!b || b === 0) return a > 0 ? '↑ New' : '—';
+    const pct = Math.round(((a - b) / b) * 100);
+    if (pct > 0) return `↑ ${pct}%`;
+    if (pct < 0) return `↓ ${Math.abs(pct)}%`;
+    return '—';
+  }
+
+  function changeColor(a, b) {
+    if (!b || b === 0) return a > 0 ? '#1e8449' : '#aaa';
+    return a >= b ? '#1e8449' : '#c0392b';
+  }
+
+  function changeBg(a, b) {
+    if (!b || b === 0) return a > 0 ? '#eef7f1' : '#f0f0f0';
+    return a >= b ? '#eef7f1' : '#fde8e8';
+  }
   const [rDraft, setRDraft] = useState({});
   const [showCustom, setShowCustom] = useState(false);
   const [customFrom, setCustomFrom] = useState('');
@@ -277,7 +313,7 @@ export default function Dashboard() {
 
         {/* Tabs */}
         <div style={S.tabs}>
-          {[['sales','Sales'],['inventory','Inventory'],['traffic','Traffic'],['gifting','Gifting'],['ads','Ads']].map(([t,l]) => tabBtn(t,l))}
+          {[['sales','Sales'],['inventory','Inventory'],['traffic','Traffic'],['gifting','Gifting'],['compare','Compare'],['ads','Ads']].map(([t,l]) => tabBtn(t,l))}
         </div>
 
         {/* Content */}
@@ -585,6 +621,116 @@ export default function Dashboard() {
                 )}
               </div>
 
+            </div>
+          )}
+
+          {/* COMPARE */}
+          {tab === 'compare' && (
+            <div>
+              {/* Date range selector */}
+              <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', padding: '16px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', fontWeight: 600, whiteSpace: 'nowrap' }}>Period A</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#f0f0f0', borderRadius: '3px', padding: '6px 10px' }}>
+                    <input type="date" value={compareA.from} onChange={e => setCompareA(p => ({ ...p, from: e.target.value }))}
+                      style={{ fontSize: '12px', fontFamily: 'inherit', border: 'none', background: 'transparent', color: '#1a1a1a', outline: 'none', width: '120px' }} />
+                    <span style={{ fontSize: '11px', color: '#aaa' }}>→</span>
+                    <input type="date" value={compareA.to} onChange={e => setCompareA(p => ({ ...p, to: e.target.value }))}
+                      style={{ fontSize: '12px', fontFamily: 'inherit', border: 'none', background: 'transparent', color: '#1a1a1a', outline: 'none', width: '120px' }} />
+                  </div>
+                </div>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#bbb', letterSpacing: '0.1em' }}>VS</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', fontWeight: 600, whiteSpace: 'nowrap' }}>Period B</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#f0f0f0', borderRadius: '3px', padding: '6px 10px' }}>
+                    <input type="date" value={compareB.from} onChange={e => setCompareB(p => ({ ...p, from: e.target.value }))}
+                      style={{ fontSize: '12px', fontFamily: 'inherit', border: 'none', background: 'transparent', color: '#1a1a1a', outline: 'none', width: '120px' }} />
+                    <span style={{ fontSize: '11px', color: '#aaa' }}>→</span>
+                    <input type="date" value={compareB.to} onChange={e => setCompareB(p => ({ ...p, to: e.target.value }))}
+                      style={{ fontSize: '12px', fontFamily: 'inherit', border: 'none', background: 'transparent', color: '#1a1a1a', outline: 'none', width: '120px' }} />
+                  </div>
+                </div>
+                <button onClick={runCompare} disabled={compareLoading || !compareA.from || !compareA.to || !compareB.from || !compareB.to}
+                  style={{ background: '#1a1a1a', color: '#fff', border: 'none', padding: '7px 20px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '3px', fontFamily: 'inherit', marginLeft: 'auto', opacity: (!compareA.from || !compareA.to || !compareB.from || !compareB.to) ? 0.4 : 1 }}>
+                  {compareLoading ? '...' : 'Compare'}
+                </button>
+              </div>
+
+              {!compareData ? (
+                <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', padding: '48px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '13px', color: '#777', marginBottom: '6px' }}>Enter two date ranges and hit Compare</div>
+                  <div style={{ fontSize: '11px', color: '#aaa' }}>Results will appear side by side</div>
+                </div>
+              ) : (
+                <div>
+                  {/* KPI comparison */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: '#e0e0e0', border: '1.5px solid #e0e0e0', marginBottom: '20px' }}>
+                    {[
+                      { label: 'Gross Revenue', a: compareData.a.summary.gross_revenue, b: compareData.b.summary.gross_revenue, fmt: true },
+                      { label: 'Total Orders', a: compareData.a.summary.total_orders, b: compareData.b.summary.total_orders },
+                      { label: 'Avg Order Value', a: compareData.a.summary.aov, b: compareData.b.summary.aov, fmt: true },
+                      { label: 'Units Sold', a: compareData.a.summary.total_units, b: compareData.b.summary.total_units },
+                    ].map((k, i) => (
+                      <div key={i} style={{ background: '#fff', padding: '18px 20px' }}>
+                        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: '10px', fontWeight: 600 }}>{k.label}</div>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.02em', color: '#1a1a1a' }}>{k.fmt ? fmt(k.a) : k.a}</span>
+                          <span style={{ fontSize: '18px', fontWeight: 600, color: '#aaa', marginBottom: '2px' }}>{k.fmt ? fmt(k.b) : k.b}</span>
+                          <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 6px', borderRadius: '3px', marginBottom: '3px', background: changeBg(k.a, k.b), color: changeColor(k.a, k.b) }}>
+                            {pctChange(k.a, k.b)}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <span style={{ fontSize: '10px', color: '#555', fontWeight: 600 }}>{compareA.from} – {compareA.to}</span>
+                          <span style={{ fontSize: '10px', color: '#aaa' }}>vs {compareB.from} – {compareB.to}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Product comparison table */}
+                  <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: '10px', fontWeight: 600 }}>Product Sales — Side by Side</div>
+                  <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', overflow: 'hidden' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 80px', padding: '10px 16px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#777', fontWeight: 600, background: '#fafafa' }}>
+                      <span>Product</span>
+                      <span style={{ textAlign: 'right' }}>{compareA.from.slice(5)} – {compareA.to.slice(5)}</span>
+                      <span style={{ textAlign: 'right' }}>{compareB.from.slice(5)} – {compareB.to.slice(5)}</span>
+                      <span style={{ textAlign: 'right' }}>Change</span>
+                    </div>
+                    {(() => {
+                      const allTitles = [...new Set([
+                        ...compareData.a.products.map(p => p.title),
+                        ...compareData.b.products.map(p => p.title)
+                      ])];
+                      const rows = allTitles.map(title => {
+                        const pa = compareData.a.products.find(p => p.title === title);
+                        const pb = compareData.b.products.find(p => p.title === title);
+                        return { title, a: pa?.revenue || 0, b: pb?.revenue || 0 };
+                      }).sort((x, y) => y.a - x.a);
+                      const totalA = rows.reduce((s, r) => s + r.a, 0);
+                      const totalB = rows.reduce((s, r) => s + r.b, 0);
+                      return (
+                        <>
+                          {rows.map((r, i) => (
+                            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 80px', padding: '12px 16px', borderBottom: '1px solid #f0f0f0', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500 }}>{r.title}</span>
+                              <span style={{ textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{r.a > 0 ? fmt(r.a) : '—'}</span>
+                              <span style={{ textAlign: 'right', fontSize: '13px', color: '#aaa' }}>{r.b > 0 ? fmt(r.b) : '—'}</span>
+                              <span style={{ textAlign: 'right', fontSize: '11px', fontWeight: 700, color: changeColor(r.a, r.b) }}>{pctChange(r.a, r.b)}</span>
+                            </div>
+                          ))}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 80px', padding: '12px 16px', borderTop: '2px solid #e0e0e0', background: '#fafafa', fontWeight: 800, fontSize: '12px', color: '#1a1a1a' }}>
+                            <span>Total</span>
+                            <span style={{ textAlign: 'right' }}>{fmt(totalA)}</span>
+                            <span style={{ textAlign: 'right', color: '#aaa', fontWeight: 600 }}>{fmt(totalB)}</span>
+                            <span style={{ textAlign: 'right', fontSize: '11px', fontWeight: 700, color: changeColor(totalA, totalB) }}>{pctChange(totalA, totalB)}</span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
