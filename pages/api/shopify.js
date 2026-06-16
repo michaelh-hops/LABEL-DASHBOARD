@@ -9,6 +9,16 @@ async function shopifyFetch(endpoint) {
   return res.json();
 }
 
+async function shopifyGraphQL(query) {
+  const res = await fetch(`https://${SHOPIFY_STORE}/admin/api/2024-01/graphql.json`, {
+    method: 'POST',
+    headers: { 'X-Shopify-Access-Token': SHOPIFY_TOKEN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  if (!res.ok) throw new Error(`Shopify GraphQL error: ${res.status}`);
+  return res.json();
+}
+
 function getDaysAgo(days) {
   const d = new Date();
   d.setDate(d.getDate() - days);
@@ -79,10 +89,7 @@ export default async function handler(req, res) {
         (order.line_items || []).forEach(item => {
           if (!map[item.title]) map[item.title] = { title: item.title, units: 0, cost: 0 };
           map[item.title].units += item.quantity;
-          // Try inventory_item_id first, fall back to title-based cost
-          const itemCost = (item.inventory_item_id && costMap[item.inventory_item_id])
-            ? costMap[item.inventory_item_id]
-            : (titleCostMap[item.title] || 0);
+          const itemCost = titleCostMap[item.title] || 0;
           map[item.title].cost += itemCost * item.quantity;
         });
       });
@@ -119,35 +126,38 @@ export default async function handler(req, res) {
 
     const { products: shopifyProducts } = await shopifyFetch('products.json?status=active&limit=250');
 
-    // Build title->cost map from product variants safely
-    const costMap = {};
+    // Build title->cost map using GraphQL (REST API doesn't return unitCost)
     const titleCostMap = {};
     try {
-      const variantIds = [];
-      shopifyProducts.forEach(p => {
-        (p.variants || []).forEach(v => {
-          if (v.inventory_item_id) variantIds.push(v.inventory_item_id);
-        });
-      });
-      // Batch fetch inventory items
-      for (let i = 0; i < variantIds.length; i += 100) {
-        const batch = variantIds.slice(i, i + 100);
-        const invRes = await shopifyFetch(`inventory_items.json?ids=${batch.join(',')}&fields=id,cost`);
-        (invRes.inventory_items || []).forEach(item => {
-          if (item.cost) costMap[item.id] = parseFloat(item.cost);
-        });
-      }
-      // Build title->avg cost map as fallback
-      shopifyProducts.forEach(p => {
-        const costs = (p.variants || [])
-          .map(v => costMap[v.inventory_item_id] || 0)
+      const gqlRes = await shopifyGraphQL(`{
+        products(first: 250, query: "status:active") {
+          edges {
+            node {
+              title
+              variants(first: 10) {
+                edges {
+                  node {
+                    inventoryItem {
+                      unitCost { amount }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }`);
+      const gqlProducts = gqlRes.data?.products?.edges || [];
+      gqlProducts.forEach(({ node: p }) => {
+        const costs = (p.variants?.edges || [])
+          .map(({ node: v }) => parseFloat(v.inventoryItem?.unitCost?.amount || 0))
           .filter(c => c > 0);
         if (costs.length > 0) {
           titleCostMap[p.title] = costs.reduce((s, c) => s + c, 0) / costs.length;
         }
       });
     } catch (costErr) {
-      console.warn('Cost fetch failed, defaulting to 0:', costErr.message);
+      console.warn('Cost fetch failed:', costErr.message);
     }
 
     const lowStock = [];
