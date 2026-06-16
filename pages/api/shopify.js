@@ -115,7 +115,7 @@ export default async function handler(req, res) {
     });
     const referrers = Object.values(referrerMap).sort((a, b) => b.orders - a.orders);
 
-    const { products: shopifyProducts } = await shopifyFetch('products.json?status=active&limit=250&fields=id,title,status,variants');
+    const { products: shopifyProducts } = await shopifyFetch('products.json?status=active&limit=250');
 
     // Fetch cost_per_item safely — wrapped so any failure doesn't crash the route
     const costMap = {};
