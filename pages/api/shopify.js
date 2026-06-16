@@ -77,15 +77,18 @@ export default async function handler(req, res) {
       const map = {};
       giftOrders.forEach(order => {
         (order.line_items || []).forEach(item => {
-          if (!map[item.title]) map[item.title] = { title: item.title, units: 0 };
+          if (!map[item.title]) map[item.title] = { title: item.title, units: 0, cost: 0 };
           map[item.title].units += item.quantity;
+          // Match cost via inventory_item_id if available
+          const itemCost = item.inventory_item_id ? (costMap[item.inventory_item_id] || 0) : 0;
+          map[item.title].cost += itemCost * item.quantity;
         });
       });
       return Object.values(map).sort((a, b) => b.units - a.units);
     }
 
     function calcGiftingCost(products) {
-      return 0;
+      return Math.round(products.reduce((s, p) => s + (p.cost || 0), 0) * 100) / 100;
     }
 
     function buildGiftOrderList(giftOrders) {
@@ -114,8 +117,26 @@ export default async function handler(req, res) {
 
     const { products: shopifyProducts } = await shopifyFetch('products.json?status=active&limit=250&fields=id,title,status,variants');
 
-    // costMap for future cost-per-item integration
+    // Fetch cost_per_item safely — wrapped so any failure doesn't crash the route
     const costMap = {};
+    try {
+      const variantIds = [];
+      shopifyProducts.forEach(p => {
+        (p.variants || []).forEach(v => {
+          if (v.inventory_item_id) variantIds.push(v.inventory_item_id);
+        });
+      });
+      // Batch in groups of 100 (Shopify limit)
+      for (let i = 0; i < variantIds.length; i += 100) {
+        const batch = variantIds.slice(i, i + 100);
+        const invRes = await shopifyFetch(`inventory_items.json?ids=${batch.join(',')}&fields=id,cost`);
+        (invRes.inventory_items || []).forEach(item => {
+          if (item.cost) costMap[item.id] = parseFloat(item.cost);
+        });
+      }
+    } catch (costErr) {
+      console.warn('Cost fetch failed, defaulting to 0:', costErr.message);
+    }
 
     const lowStock = [];
     const outOfStock = [];
