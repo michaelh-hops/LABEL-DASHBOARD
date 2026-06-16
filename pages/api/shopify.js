@@ -38,96 +38,86 @@ function getPlatform(ref) {
   return { source: 'Referral', platform: 'referral' };
 }
 
+const FREELANCE_CODE = 'FREE?LANCE?25?';
+const WELCOME_CODE = 'WELCOME';
+
+function isGiftOrder(order) {
+  const codes = (order.discount_codes || []).map(c => c.code.toUpperCase());
+  if (codes.length === 0) return false;
+  if (codes.includes(WELCOME_CODE)) return false;
+  if (codes.includes(FREELANCE_CODE)) return false;
+  return true;
+}
+
+function isFreelanceOrder(order) {
+  const codes = (order.discount_codes || []).map(c => c.code.toUpperCase());
+  return codes.includes(FREELANCE_CODE);
+}
+
+function isPaidOrder(order) {
+  const codes = (order.discount_codes || []).map(c => c.code.toUpperCase());
+  if (codes.length === 0) return true;
+  if (codes.length === 1 && codes[0] === WELCOME_CODE) return true;
+  return false;
+}
+
+function buildGiftSummary(giftOrders, costByTitle) {
+  const productMap = {};
+  giftOrders.forEach(order => {
+    (order.line_items || []).forEach(item => {
+      if (!productMap[item.title]) {
+        productMap[item.title] = { title: item.title, units: 0, cost: 0 };
+      }
+      productMap[item.title].units += item.quantity;
+      const unitCost = costByTitle[item.title] || 0;
+      productMap[item.title].cost += unitCost * item.quantity;
+    });
+  });
+  return Object.values(productMap).sort((a, b) => b.units - a.units);
+}
+
+function buildOrderList(orders) {
+  return orders.map(order => ({
+    name: order.customer
+      ? `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim() || 'Guest'
+      : (order.billing_address
+        ? `${order.billing_address.first_name || ''} ${order.billing_address.last_name || ''}`.trim()
+        : 'Guest'),
+    date: new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    items: (order.line_items || [])
+      .map(item => item.quantity > 1 ? `${item.title} ×${item.quantity}` : item.title)
+      .join(', '),
+  }));
+}
+
+function calcTotalCost(products) {
+  return Math.round(products.reduce((s, p) => s + (p.cost || 0), 0) * 100) / 100;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=60');
+
   const days = parseInt(req.query.days) || 7;
   const since = req.query.from ? new Date(req.query.from).toISOString() : getDaysAgo(days);
-  const until = req.query.to ? new Date(new Date(req.query.to).getTime() + 86400000).toISOString() : new Date().toISOString();
+  const until = req.query.to
+    ? new Date(new Date(req.query.to).getTime() + 86400000).toISOString()
+    : new Date().toISOString();
 
   try {
+    // 1. Fetch orders
     const { orders } = await shopifyFetch(
       `orders.json?status=any&created_at_min=${since}&created_at_max=${until}&limit=250&fields=id,created_at,total_price,discount_codes,line_items,referring_site,customer,billing_address`
     );
 
-    const filtered = orders.filter(order => {
-      const codes = order.discount_codes || [];
-      if (codes.length === 0) return true;
-      if (codes.length === 1 && codes[0].code.toUpperCase() === 'WELCOME') return true;
-      return false;
-    });
+    // 2. Fetch active products (for inventory)
+    const { products: shopifyProducts } = await shopifyFetch(
+      'products.json?status=active&limit=250'
+    );
 
-    const productMap = {};
-    filtered.forEach(order => {
-      (order.line_items || []).forEach(item => {
-        if (!productMap[item.title]) productMap[item.title] = { title: item.title, units: 0, revenue: 0 };
-        productMap[item.title].units += item.quantity;
-        productMap[item.title].revenue += parseFloat(item.price) * item.quantity;
-      });
-    });
-    const products = Object.values(productMap).sort((a, b) => b.revenue - a.revenue).slice(0, 15);
-
-    // Build gifting data — all discount code orders except WELCOME and FREE?LANCE?25?
-    const FREELANCE_CODE = 'FREE?LANCE?25?';
-    const WELCOME_CODE = 'WELCOME';
-
-    const clientGiftOrders = orders.filter(order => {
-      const codes = (order.discount_codes || []).map(c => c.code.toUpperCase());
-      if (codes.length === 0) return false;
-      if (codes.includes(WELCOME_CODE)) return false;
-      if (codes.includes(FREELANCE_CODE)) return false;
-      return true;
-    });
-
-    const freelanceOrders = orders.filter(order => {
-      const codes = (order.discount_codes || []).map(c => c.code.toUpperCase());
-      return codes.includes(FREELANCE_CODE);
-    });
-
-    function buildGiftProducts(giftOrders, costLookup) {
-      const map = {};
-      giftOrders.forEach(order => {
-        (order.line_items || []).forEach(item => {
-          if (!map[item.title]) map[item.title] = { title: item.title, units: 0, cost: 0 };
-          map[item.title].units += item.quantity;
-          const itemCost = (costLookup && costLookup[item.title]) || 0;
-          map[item.title].cost += itemCost * item.quantity;
-        });
-      });
-      return Object.values(map).sort((a, b) => b.units - a.units);
-    }
-
-    function calcGiftingCost(products) {
-      return Math.round(products.reduce((s, p) => s + (p.cost || 0), 0) * 100) / 100;
-    }
-
-    function buildGiftOrderList(giftOrders) {
-      return giftOrders.map(order => ({
-        name: order.customer ? `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim() || 'Guest' : (order.billing_address ? `${order.billing_address.first_name || ''} ${order.billing_address.last_name || ''}`.trim() : 'Guest'),
-        date: new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        items: (order.line_items || []).map(item => item.quantity > 1 ? `${item.title} ×${item.quantity}` : item.title).join(', ')
-      }));
-    }
-
-    const clientGiftOrderList = buildGiftOrderList(clientGiftOrders);
-    const freelanceOrderList = buildGiftOrderList(freelanceOrders);
-
-    const totalGiftedUnits = [...clientGiftProducts, ...freelanceProducts].reduce((s, p) => s + p.units, 0);
-
-    const referrerMap = {};
-    filtered.forEach(order => {
-      const { source, platform } = getPlatform(order.referring_site);
-      if (!referrerMap[source]) referrerMap[source] = { source, platform, orders: 0, revenue: 0 };
-      referrerMap[source].orders += 1;
-      referrerMap[source].revenue += parseFloat(order.total_price);
-    });
-    const referrers = Object.values(referrerMap).sort((a, b) => b.orders - a.orders);
-
-    const { products: shopifyProducts } = await shopifyFetch('products.json?status=active&limit=250');
-
-    // Build title->cost map using GraphQL (REST API doesn't return unitCost)
-    const titleCostMap = {};
+    // 3. Fetch unit costs via GraphQL (REST API doesn't return unitCost)
+    const costByTitle = {};
     try {
-      const gqlRes = await shopifyGraphQL(`{
+      const gqlResult = await shopifyGraphQL(`{
         products(first: 250, query: "status:active") {
           edges {
             node {
@@ -145,28 +135,57 @@ export default async function handler(req, res) {
           }
         }
       }`);
-      const gqlProducts = gqlRes.data?.products?.edges || [];
-      gqlProducts.forEach(({ node: p }) => {
-        const costs = (p.variants?.edges || [])
-          .map(({ node: v }) => parseFloat(v.inventoryItem?.unitCost?.amount || 0))
-          .filter(c => c > 0);
+      const gqlProducts = (gqlResult.data && gqlResult.data.products && gqlResult.data.products.edges) || [];
+      gqlProducts.forEach(function(edge) {
+        const p = edge.node;
+        const variantEdges = (p.variants && p.variants.edges) || [];
+        const costs = variantEdges
+          .map(function(ve) {
+            return ve.node && ve.node.inventoryItem && ve.node.inventoryItem.unitCost
+              ? parseFloat(ve.node.inventoryItem.unitCost.amount)
+              : 0;
+          })
+          .filter(function(c) { return c > 0; });
         if (costs.length > 0) {
-          titleCostMap[p.title] = costs.reduce((s, c) => s + c, 0) / costs.length;
+          costByTitle[p.title] = costs.reduce(function(s, c) { return s + c; }, 0) / costs.length;
         }
       });
     } catch (costErr) {
-      console.warn('Cost fetch failed:', costErr.message);
+      console.warn('Cost fetch failed, gifting costs will be 0:', costErr.message);
     }
 
-    const clientGiftProducts = buildGiftProducts(clientGiftOrders, titleCostMap);
-    const freelanceProducts = buildGiftProducts(freelanceOrders, titleCostMap);
+    // 4. Split orders into categories
+    const paidOrders = orders.filter(isPaidOrder);
+    const clientGiftOrders = orders.filter(isGiftOrder);
+    const freelanceOrders = orders.filter(isFreelanceOrder);
 
+    // 5. Build product sales from paid orders
+    const productMap = {};
+    paidOrders.forEach(function(order) {
+      (order.line_items || []).forEach(function(item) {
+        if (!productMap[item.title]) productMap[item.title] = { title: item.title, units: 0, revenue: 0 };
+        productMap[item.title].units += item.quantity;
+        productMap[item.title].revenue += parseFloat(item.price) * item.quantity;
+      });
+    });
+    const products = Object.values(productMap).sort(function(a, b) { return b.revenue - a.revenue; }).slice(0, 15);
+
+    // 6. Build referrer breakdown
+    const referrerMap = {};
+    paidOrders.forEach(function(order) {
+      const plat = getPlatform(order.referring_site);
+      if (!referrerMap[plat.source]) referrerMap[plat.source] = { source: plat.source, platform: plat.platform, orders: 0, revenue: 0 };
+      referrerMap[plat.source].orders += 1;
+      referrerMap[plat.source].revenue += parseFloat(order.total_price);
+    });
+    const referrers = Object.values(referrerMap).sort(function(a, b) { return b.orders - a.orders; });
+
+    // 7. Build inventory data
     const lowStock = [];
     const outOfStock = [];
     const allVariants = [];
-
-    shopifyProducts.forEach(product => {
-      product.variants.forEach(variant => {
+    shopifyProducts.forEach(function(product) {
+      (product.variants || []).forEach(function(variant) {
         const qty = variant.inventory_quantity;
         const v = variant.title === 'Default Title' ? '' : variant.title;
         allVariants.push({ title: product.title, variant: v, units: qty });
@@ -177,41 +196,60 @@ export default async function handler(req, res) {
         }
       });
     });
+    lowStock.sort(function(a, b) { return a.units - b.units; });
 
-    lowStock.sort((a, b) => a.units - b.units);
-    outOfStock.sort((a, b) => a.title.localeCompare(b.title));
-
-    const mostMoved = products.slice(0, 8).map(p => {
-      const inv = allVariants.find(v => v.title === p.title);
+    const mostMoved = products.slice(0, 8).map(function(p) {
+      const inv = allVariants.find(function(v) { return v.title === p.title; });
       return { title: p.title, variant: '', units_sold: p.units, remaining: inv ? inv.units : '—' };
     });
 
+    // 8. Build gifting summaries
+    const clientGiftProducts = buildGiftSummary(clientGiftOrders, costByTitle);
+    const freelanceProducts = buildGiftSummary(freelanceOrders, costByTitle);
+    const totalGiftedUnits = clientGiftProducts.reduce(function(s, p) { return s + p.units; }, 0)
+      + freelanceProducts.reduce(function(s, p) { return s + p.units; }, 0);
+
+    // 9. Totals
+    const totalRevenue = paidOrders.reduce(function(s, o) { return s + parseFloat(o.total_price); }, 0);
+    const totalUnits = products.reduce(function(s, p) { return s + p.units; }, 0);
+    const aov = paidOrders.length > 0 ? Math.round(totalRevenue / paidOrders.length) : 0;
+
     res.status(200).json({
-      ok: true, days,
+      ok: true,
+      days,
       summary: {
-        total_orders: filtered.length,
-        gross_revenue: Math.round(filtered.reduce((s, o) => s + parseFloat(o.total_price), 0)),
-        total_units: products.reduce((s, p) => s + p.units, 0),
-        aov: filtered.length > 0 ? Math.round(filtered.reduce((s, o) => s + parseFloat(o.total_price), 0) / filtered.length) : 0,
+        total_orders: paidOrders.length,
+        gross_revenue: Math.round(totalRevenue),
+        total_units: totalUnits,
+        aov,
         units_gifted: totalGiftedUnits,
       },
-      products, referrers,
+      products,
+      referrers,
       inventory: {
         low_stock: lowStock.slice(0, 20),
         out_of_stock: outOfStock.slice(0, 20),
         most_moved: mostMoved,
       },
       gifting: {
-        client: { products: clientGiftProducts, orders: clientGiftOrderList, total_cost: calcGiftingCost(clientGiftProducts) },
-        freelance: { products: freelanceProducts, orders: freelanceOrderList, total_cost: calcGiftingCost(freelanceProducts) },
-        total_cost: calcGiftingCost([...clientGiftProducts, ...freelanceProducts]),
+        client: {
+          products: clientGiftProducts,
+          orders: buildOrderList(clientGiftOrders),
+          total_cost: calcTotalCost(clientGiftProducts),
+        },
+        freelance: {
+          products: freelanceProducts,
+          orders: buildOrderList(freelanceOrders),
+          total_cost: calcTotalCost(freelanceProducts),
+        },
+        total_cost: calcTotalCost(clientGiftProducts) + calcTotalCost(freelanceProducts),
         total_units: totalGiftedUnits,
       },
       updated_at: new Date().toISOString(),
     });
 
   } catch (err) {
-    console.error('Shopify fetch error:', err);
+    console.error('Shopify fetch error:', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 }
