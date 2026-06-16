@@ -77,11 +77,17 @@ export default async function handler(req, res) {
       const map = {};
       giftOrders.forEach(order => {
         (order.line_items || []).forEach(item => {
-          if (!map[item.title]) map[item.title] = { title: item.title, units: 0 };
+          if (!map[item.title]) map[item.title] = { title: item.title, units: 0, cost: 0 };
           map[item.title].units += item.quantity;
+          const itemCost = costMap[item.inventory_item_id] || 0;
+          map[item.title].cost += itemCost * item.quantity;
         });
       });
       return Object.values(map).sort((a, b) => b.units - a.units);
+    }
+
+    function calcGiftingCost(products) {
+      return Math.round(products.reduce((s, p) => s + (p.cost || 0), 0) * 100) / 100;
     }
 
     function buildGiftOrderList(giftOrders) {
@@ -109,6 +115,19 @@ export default async function handler(req, res) {
     const referrers = Object.values(referrerMap).sort((a, b) => b.orders - a.orders);
 
     const { products: shopifyProducts } = await shopifyFetch('products.json?status=active&limit=250&fields=id,title,status,variants');
+
+    // Fetch inventory items to get cost_per_item
+    const inventoryItemIds = [];
+    shopifyProducts.forEach(p => p.variants.forEach(v => { if (v.inventory_item_id) inventoryItemIds.push(v.inventory_item_id); }));
+    const costMap = {};
+    // Batch fetch inventory items in groups of 100
+    for (let i = 0; i < inventoryItemIds.length; i += 100) {
+      const batch = inventoryItemIds.slice(i, i + 100);
+      const { inventory_items } = await shopifyFetch(`inventory_items.json?ids=${batch.join(',')}`);
+      (inventory_items || []).forEach(item => {
+        costMap[item.id] = parseFloat(item.cost || 0);
+      });
+    }
 
     const lowStock = [];
     const outOfStock = [];
@@ -151,8 +170,10 @@ export default async function handler(req, res) {
         most_moved: mostMoved,
       },
       gifting: {
-        client: { products: clientGiftProducts, orders: clientGiftOrderList },
-        freelance: { products: freelanceProducts, orders: freelanceOrderList },
+        client: { products: clientGiftProducts, orders: clientGiftOrderList, total_cost: calcGiftingCost(clientGiftProducts) },
+        freelance: { products: freelanceProducts, orders: freelanceOrderList, total_cost: calcGiftingCost(freelanceProducts) },
+        total_cost: calcGiftingCost([...clientGiftProducts, ...freelanceProducts]),
+        total_units: totalGiftedUnits,
       },
       updated_at: new Date().toISOString(),
     });
