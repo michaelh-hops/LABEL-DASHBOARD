@@ -673,12 +673,18 @@ export default function Dashboard() {
                 <div>
                   {/* KPI comparison */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: '#e0e0e0', border: '1.5px solid #e0e0e0', marginBottom: '20px' }}>
-                    {[
-                      { label: 'Gross Revenue', a: compareData.a.summary.gross_revenue, b: compareData.b.summary.gross_revenue, fmt: true, giftLabel: 'Gifting Cost', ga: compareData.a.gifting?.total_cost || 0, gb: compareData.b.gifting?.total_cost || 0, gfmt: true },
-                      { label: 'Total Orders', a: compareData.a.summary.total_orders, b: compareData.b.summary.total_orders, giftLabel: 'Units Gifted', ga: compareData.a.gifting?.total_units || 0, gb: compareData.b.gifting?.total_units || 0 },
-                      { label: 'Avg Order Value', a: compareData.a.summary.aov, b: compareData.b.summary.aov, fmt: true },
-                      { label: 'Units Sold', a: compareData.a.summary.total_units, b: compareData.b.summary.total_units },
-                    ].map((k, i) => (
+                    {(() => {
+                      const ga_cost = compareData.a.gifting ? compareData.a.gifting.total_cost || 0 : 0;
+                      const gb_cost = compareData.b.gifting ? compareData.b.gifting.total_cost || 0 : 0;
+                      const ga_units = compareData.a.gifting ? compareData.a.gifting.total_units || 0 : 0;
+                      const gb_units = compareData.b.gifting ? compareData.b.gifting.total_units || 0 : 0;
+                      return [
+                        { label: 'Gross Revenue', a: compareData.a.summary.gross_revenue, b: compareData.b.summary.gross_revenue, fmt: true, giftLabel: 'Gifting Cost', ga: ga_cost, gb: gb_cost, gfmt: true },
+                        { label: 'Total Orders', a: compareData.a.summary.total_orders, b: compareData.b.summary.total_orders, giftLabel: 'Units Gifted', ga: ga_units, gb: gb_units },
+                        { label: 'Avg Order Value', a: compareData.a.summary.aov, b: compareData.b.summary.aov, fmt: true },
+                        { label: 'Units Sold', a: compareData.a.summary.total_units, b: compareData.b.summary.total_units },
+                      ];
+                    })().map((k, i) => (
                       <div key={i} style={{ background: '#fff', padding: '18px 20px' }}>
                         <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: '10px', fontWeight: 600 }}>{k.label}</div>
                         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginBottom: '4px' }}>
