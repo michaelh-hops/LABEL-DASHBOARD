@@ -219,10 +219,14 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    fetchData(days);
-    const iv = setInterval(() => { if (!isCustomActive) fetchData(days); }, 10 * 60 * 1000);
+    fetchData(7);
+    const iv = setInterval(() => {
+      if (!isCustomActive) {
+        setDays(prev => { fetchData(prev); return prev; });
+      }
+    }, 10 * 60 * 1000);
     return () => clearInterval(iv);
-  }, [days, fetchData, isCustomActive]);
+  }, [fetchData, isCustomActive]);
 
   const s = data?.summary || {};
   const products = data?.products || [];
