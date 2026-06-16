@@ -77,17 +77,15 @@ export default async function handler(req, res) {
       const map = {};
       giftOrders.forEach(order => {
         (order.line_items || []).forEach(item => {
-          if (!map[item.title]) map[item.title] = { title: item.title, units: 0, cost: 0 };
+          if (!map[item.title]) map[item.title] = { title: item.title, units: 0 };
           map[item.title].units += item.quantity;
-          const itemCost = costMap[item.inventory_item_id] || 0;
-          map[item.title].cost += itemCost * item.quantity;
         });
       });
       return Object.values(map).sort((a, b) => b.units - a.units);
     }
 
     function calcGiftingCost(products) {
-      return Math.round(products.reduce((s, p) => s + (p.cost || 0), 0) * 100) / 100;
+      return 0;
     }
 
     function buildGiftOrderList(giftOrders) {
@@ -116,18 +114,8 @@ export default async function handler(req, res) {
 
     const { products: shopifyProducts } = await shopifyFetch('products.json?status=active&limit=250&fields=id,title,status,variants');
 
-    // Fetch inventory items to get cost_per_item
-    const inventoryItemIds = [];
-    shopifyProducts.forEach(p => p.variants.forEach(v => { if (v.inventory_item_id) inventoryItemIds.push(v.inventory_item_id); }));
+    // costMap for future cost-per-item integration
     const costMap = {};
-    // Batch fetch inventory items in groups of 100
-    for (let i = 0; i < inventoryItemIds.length; i += 100) {
-      const batch = inventoryItemIds.slice(i, i + 100);
-      const { inventory_items } = await shopifyFetch(`inventory_items.json?ids=${batch.join(',')}`);
-      (inventory_items || []).forEach(item => {
-        costMap[item.id] = parseFloat(item.cost || 0);
-      });
-    }
 
     const lowStock = [];
     const outOfStock = [];
