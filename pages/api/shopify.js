@@ -79,8 +79,10 @@ export default async function handler(req, res) {
         (order.line_items || []).forEach(item => {
           if (!map[item.title]) map[item.title] = { title: item.title, units: 0, cost: 0 };
           map[item.title].units += item.quantity;
-          // Match cost via inventory_item_id if available
-          const itemCost = item.inventory_item_id ? (costMap[item.inventory_item_id] || 0) : 0;
+          // Try inventory_item_id first, fall back to title-based cost
+          const itemCost = (item.inventory_item_id && costMap[item.inventory_item_id])
+            ? costMap[item.inventory_item_id]
+            : (titleCostMap[item.title] || 0);
           map[item.title].cost += itemCost * item.quantity;
         });
       });
@@ -117,8 +119,9 @@ export default async function handler(req, res) {
 
     const { products: shopifyProducts } = await shopifyFetch('products.json?status=active&limit=250');
 
-    // Fetch cost_per_item safely — wrapped so any failure doesn't crash the route
+    // Build title->cost map from product variants safely
     const costMap = {};
+    const titleCostMap = {};
     try {
       const variantIds = [];
       shopifyProducts.forEach(p => {
@@ -126,7 +129,7 @@ export default async function handler(req, res) {
           if (v.inventory_item_id) variantIds.push(v.inventory_item_id);
         });
       });
-      // Batch in groups of 100 (Shopify limit)
+      // Batch fetch inventory items
       for (let i = 0; i < variantIds.length; i += 100) {
         const batch = variantIds.slice(i, i + 100);
         const invRes = await shopifyFetch(`inventory_items.json?ids=${batch.join(',')}&fields=id,cost`);
@@ -134,6 +137,15 @@ export default async function handler(req, res) {
           if (item.cost) costMap[item.id] = parseFloat(item.cost);
         });
       }
+      // Build title->avg cost map as fallback
+      shopifyProducts.forEach(p => {
+        const costs = (p.variants || [])
+          .map(v => costMap[v.inventory_item_id] || 0)
+          .filter(c => c > 0);
+        if (costs.length > 0) {
+          titleCostMap[p.title] = costs.reduce((s, c) => s + c, 0) / costs.length;
+        }
+      });
     } catch (costErr) {
       console.warn('Cost fetch failed, defaulting to 0:', costErr.message);
     }
