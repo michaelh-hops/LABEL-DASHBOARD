@@ -681,8 +681,8 @@ export default function Dashboard() {
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          <span style={{ fontSize: '10px', color: '#555', fontWeight: 600 }}>{compareA.from} – {compareA.to}</span>
-                          <span style={{ fontSize: '10px', color: '#aaa' }}>vs {compareB.from} – {compareB.to}</span>
+                          <span style={{ fontSize: '10px', color: '#555', fontWeight: 700 }}>A</span>
+                          <span style={{ fontSize: '10px', color: '#aaa' }}>vs B</span>
                         </div>
                       </div>
                     ))}
@@ -693,8 +693,8 @@ export default function Dashboard() {
                   <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', overflow: 'hidden' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 80px', padding: '10px 16px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#777', fontWeight: 600, background: '#fafafa' }}>
                       <span>Product</span>
-                      <span style={{ textAlign: 'right' }}>{compareA.from.slice(5)} – {compareA.to.slice(5)}</span>
-                      <span style={{ textAlign: 'right' }}>{compareB.from.slice(5)} – {compareB.to.slice(5)}</span>
+                      <span style={{ textAlign: 'right' }}>Period A</span>
+                      <span style={{ textAlign: 'right' }}>Period B</span>
                       <span style={{ textAlign: 'right' }}>Change</span>
                     </div>
                     {(() => {
