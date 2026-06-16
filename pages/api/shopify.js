@@ -83,13 +83,13 @@ export default async function handler(req, res) {
       return codes.includes(FREELANCE_CODE);
     });
 
-    function buildGiftProducts(giftOrders) {
+    function buildGiftProducts(giftOrders, costLookup) {
       const map = {};
       giftOrders.forEach(order => {
         (order.line_items || []).forEach(item => {
           if (!map[item.title]) map[item.title] = { title: item.title, units: 0, cost: 0 };
           map[item.title].units += item.quantity;
-          const itemCost = titleCostMap[item.title] || 0;
+          const itemCost = (costLookup && costLookup[item.title]) || 0;
           map[item.title].cost += itemCost * item.quantity;
         });
       });
@@ -108,8 +108,6 @@ export default async function handler(req, res) {
       }));
     }
 
-    const clientGiftProducts = buildGiftProducts(clientGiftOrders);
-    const freelanceProducts = buildGiftProducts(freelanceOrders);
     const clientGiftOrderList = buildGiftOrderList(clientGiftOrders);
     const freelanceOrderList = buildGiftOrderList(freelanceOrders);
 
@@ -159,6 +157,9 @@ export default async function handler(req, res) {
     } catch (costErr) {
       console.warn('Cost fetch failed:', costErr.message);
     }
+
+    const clientGiftProducts = buildGiftProducts(clientGiftOrders, titleCostMap);
+    const freelanceProducts = buildGiftProducts(freelanceOrders, titleCostMap);
 
     const lowStock = [];
     const outOfStock = [];
