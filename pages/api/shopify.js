@@ -2,7 +2,7 @@ const SHOPIFY_STORE = process.env.SHOPIFY_STORE_DOMAIN;
 const SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
 
 async function shopifyFetch(endpoint) {
-  const res = await fetch(`https://${SHOPIFY_STORE}/admin/api/2024-01/${endpoint}`, {
+  const res = await fetch(`https://${SHOPIFY_STORE}/admin/api/2025-01/${endpoint}`, {
     headers: { 'X-Shopify-Access-Token': SHOPIFY_TOKEN, 'Content-Type': 'application/json' },
   });
   if (!res.ok) throw new Error(`Shopify API error: ${res.status}`);
@@ -10,7 +10,7 @@ async function shopifyFetch(endpoint) {
 }
 
 async function shopifyGraphQL(query) {
-  const res = await fetch(`https://${SHOPIFY_STORE}/admin/api/2024-01/graphql.json`, {
+  const res = await fetch(`https://${SHOPIFY_STORE}/admin/api/2025-01/graphql.json`, {
     method: 'POST',
     headers: { 'X-Shopify-Access-Token': SHOPIFY_TOKEN, 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
@@ -69,7 +69,11 @@ function buildGiftSummary(giftOrders, costByTitle) {
         productMap[item.title] = { title: item.title, units: 0, cost: 0 };
       }
       productMap[item.title].units += item.quantity;
-      const unitCost = costByTitle[item.title] || 0;
+      // Match by product_id first (survives renames), fall back to title
+      const productId = item.product_id ? String(item.product_id) : null;
+      const unitCost = (productId && costByTitle[productId])
+        ? costByTitle[productId]
+        : (costByTitle[item.title] || 0);
       productMap[item.title].cost += unitCost * item.quantity;
     });
   });
@@ -121,6 +125,7 @@ export default async function handler(req, res) {
         products(first: 250, query: "status:active") {
           edges {
             node {
+              id
               title
               variants(first: 10) {
                 edges {
@@ -147,7 +152,11 @@ export default async function handler(req, res) {
           })
           .filter(function(c) { return c > 0; });
         if (costs.length > 0) {
-          costByTitle[p.title] = costs.reduce(function(s, c) { return s + c; }, 0) / costs.length;
+          const avgCost = costs.reduce(function(s, c) { return s + c; }, 0) / costs.length;
+          // Store by both numeric ID and title for matching
+          const numericId = p.id.replace('gid://shopify/Product/', '');
+          costByTitle[numericId] = avgCost;
+          costByTitle[p.title] = avgCost; // title fallback
         }
       });
     } catch (costErr) {
