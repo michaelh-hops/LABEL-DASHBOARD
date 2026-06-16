@@ -42,6 +42,7 @@ const SEED = {
   updated_at: new Date().toISOString(),
   gifting: {
     client: {
+      total_cost: 420,
       products: [
         { title: 'LOS YORK Global Nomads hat', units: 6 },
         { title: 'The LOS YORK Global Nomads 25 Tote', units: 4 },
@@ -62,6 +63,7 @@ const SEED = {
       ]
     },
     freelance: {
+      total_cost: 142,
       products: [
         { title: 'LOS YORK Global Nomads hat', units: 2 },
         { title: 'Long Sleeve T', units: 2 },
@@ -228,8 +230,8 @@ export default function Dashboard() {
   const lowStock = data?.inventory?.low_stock || [];
   const outOfStock = data?.inventory?.out_of_stock || [];
   const mostMoved = data?.inventory?.most_moved || [];
-  const giftingClient = data?.gifting?.client || { products: [], orders: [] };
-  const giftingFreelance = data?.gifting?.freelance || { products: [], orders: [] };
+  const giftingClient = data?.gifting?.client || { products: [], orders: [], total_cost: 0 };
+  const giftingFreelance = data?.gifting?.freelance || { products: [], orders: [], total_cost: 0 };
   const totalGiftedUnits = [...(giftingClient.products || []), ...(giftingFreelance.products || [])].reduce((s, p) => s + p.units, 0);
 
   const tabBtn = (t, label) => (
@@ -666,8 +668,8 @@ export default function Dashboard() {
                   {/* KPI comparison */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: '#e0e0e0', border: '1.5px solid #e0e0e0', marginBottom: '20px' }}>
                     {[
-                      { label: 'Gross Revenue', a: compareData.a.summary.gross_revenue, b: compareData.b.summary.gross_revenue, fmt: true },
-                      { label: 'Total Orders', a: compareData.a.summary.total_orders, b: compareData.b.summary.total_orders },
+                      { label: 'Gross Revenue', a: compareData.a.summary.gross_revenue, b: compareData.b.summary.gross_revenue, fmt: true, giftLabel: 'Gifting Cost', ga: compareData.a.gifting?.total_cost || 0, gb: compareData.b.gifting?.total_cost || 0, gfmt: true },
+                      { label: 'Total Orders', a: compareData.a.summary.total_orders, b: compareData.b.summary.total_orders, giftLabel: 'Units Gifted', ga: compareData.a.gifting?.total_units || 0, gb: compareData.b.gifting?.total_units || 0 },
                       { label: 'Avg Order Value', a: compareData.a.summary.aov, b: compareData.b.summary.aov, fmt: true },
                       { label: 'Units Sold', a: compareData.a.summary.total_units, b: compareData.b.summary.total_units },
                     ].map((k, i) => (
@@ -680,10 +682,23 @@ export default function Dashboard() {
                             {pctChange(k.a, k.b)}
                           </span>
                         </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: k.giftLabel ? '10px' : 0 }}>
                           <span style={{ fontSize: '10px', color: '#555', fontWeight: 700 }}>A</span>
                           <span style={{ fontSize: '10px', color: '#aaa' }}>vs B</span>
                         </div>
+                        {k.giftLabel && (
+                          <>
+                            <div style={{ height: '1px', background: '#f0f0f0', margin: '8px 0' }} />
+                            <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999', marginBottom: '6px', fontWeight: 600 }}>{k.giftLabel}</div>
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                              <span style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.02em', color: '#1a1a1a' }}>{k.gfmt ? fmt(k.ga) : k.ga}</span>
+                              <span style={{ fontSize: '15px', fontWeight: 600, color: '#aaa', marginBottom: '1px' }}>{k.gfmt ? fmt(k.gb) : k.gb}</span>
+                              <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 5px', borderRadius: '3px', marginBottom: '2px', background: changeBg(k.ga, k.gb), color: changeColor(k.ga, k.gb) }}>
+                                {pctChange(k.ga, k.gb)}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
