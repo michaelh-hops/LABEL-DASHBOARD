@@ -116,8 +116,8 @@ const S = {
   refreshBtn: { fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 14px', cursor: 'pointer', background: 'none', border: '1.5px solid #555', borderRadius: '3px', color: '#aaa', fontFamily: 'inherit', fontWeight: '600' },
   timebar: { background: '#fff', padding: '12px 28px', borderBottom: '2px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' },
   timeLabel: { fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#666', marginRight: '4px', fontWeight: '600' },
-  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '0', background: '#fff', borderBottom: '2px solid #e0e0e0' },
-  kpiCard: { padding: '26px 28px 22px' },
+  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0', background: '#fff', borderBottom: '2px solid #e0e0e0' },
+  kpiCard: { padding: '28px 32px 24px' },
   kpiLabel: { fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: '6px' },
   kpiVal: { fontSize: '26px', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, color: '#1c1f2e' },
   kpiSub: { fontSize: '10px', color: '#888', marginTop: '4px' },
@@ -126,7 +126,7 @@ const S = {
   secLabel: { fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#555', marginBottom: '12px', fontWeight: '600' },
   tbl: { background: '#fff', border: '0.5px solid #e8e8e4', borderRadius: '8px', overflow: 'hidden' },
   thead: { display: 'grid', padding: '10px 18px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', fontWeight: '600', background: '#fafafa' },
-  trow: { display: 'grid', padding: '14px 18px', borderBottom: '1px solid #f0f0f0', alignItems: 'center' },
+  trow: { display: 'grid', padding: '16px 20px', borderBottom: '1px solid #f0f0f0', alignItems: 'center' },
   ttotal: { display: 'grid', padding: '13px 18px', borderTop: '2px solid #e0e0e0', background: '#fafafa', fontWeight: 800, fontSize: '13px', color: '#1a1a1a' },
 };
 
@@ -307,10 +307,9 @@ export default function Dashboard() {
             { label: 'Gross Revenue', value: s.gross_revenue != null ? fmt(s.gross_revenue) : '—' },
             { label: 'Total Orders', value: s.total_orders ?? '—' },
             { label: 'Avg Order Value', value: s.aov != null ? fmt(s.aov) : '—' },
-            { label: 'Units Sold', value: s.total_units ?? '—' },
-            { label: 'Units Gifted', value: s.units_gifted ?? '—', gifted: true },
+            { label: 'Units', value: s.total_units != null ? `${s.total_units} sold · ${s.units_gifted ?? 0} gifted` : '—' },
           ].map((k, i) => (
-            <div key={i} style={{ ...S.kpiCard, borderRight: i < 4 ? '1.5px solid #e8e8e8' : 'none', background: k.gifted ? '#fafafa' : '#fff' }}>
+            <div key={i} style={{ ...S.kpiCard, borderRight: i < 3 ? '1.5px solid #e8e8e8' : 'none', background: '#fff' }}>
               <div style={S.kpiLabel}>{k.label}</div>
               <div style={{ ...S.kpiVal, color: loading ? '#ccc' : '#1a1a1a' }}>{k.value}</div>
             </div>
@@ -346,7 +345,7 @@ export default function Dashboard() {
                   <span style={{ textAlign: 'right' }}>{fmt(products.reduce((s, p) => s + p.revenue, 0))}</span>
                 </div>
               </div>
-              <div style={{ fontSize: '11px', color: '#888', marginTop: '8px' }}>All discount codes excluded · WELCOME code orders included at discounted price</div>
+
             </div>
           )}
 
