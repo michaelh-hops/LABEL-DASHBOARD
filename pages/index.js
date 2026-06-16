@@ -555,7 +555,10 @@ export default function Dashboard() {
 
               {/* Client Gifting */}
               <div>
-                <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#555', marginBottom: '12px', fontWeight: 600 }}>Client Gifting</div>
+                <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#555', marginBottom: '12px', fontWeight: 600, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <span>Client Gifting</span>
+                  {giftingClient.total_cost > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#777', letterSpacing: 0, textTransform: 'none' }}>Cost to business: <strong style={{ color: '#1a1a1a' }}>{fmt(giftingClient.total_cost)}</strong></span>}
+                </div>
                 <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', overflow: 'hidden' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '10px 16px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#777', fontWeight: 600, background: '#fafafa' }}>
                     <span>Product</span><span style={{ textAlign: 'right' }}>Units</span>
@@ -590,7 +593,10 @@ export default function Dashboard() {
 
               {/* Freelance */}
               <div>
-                <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#555', marginBottom: '12px', fontWeight: 600 }}>Freelance</div>
+                <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#555', marginBottom: '12px', fontWeight: 600, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <span>Freelance</span>
+                  {giftingFreelance.total_cost > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#777', letterSpacing: 0, textTransform: 'none' }}>Cost to business: <strong style={{ color: '#1a1a1a' }}>{fmt(giftingFreelance.total_cost)}</strong></span>}
+                </div>
                 <div style={{ background: '#fff', border: '1.5px solid #e0e0e0', overflow: 'hidden' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', padding: '10px 16px', borderBottom: '1.5px solid #e8e8e8', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#777', fontWeight: 600, background: '#fafafa' }}>
                     <span>Product</span><span style={{ textAlign: 'right' }}>Units</span>
