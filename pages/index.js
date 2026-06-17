@@ -4,7 +4,7 @@ import Head from 'next/head';
 // ---- Seed data (shown on load / if API fails) ----
 const SEED = {
   ok: true, days: 7,
-  summary: { total_orders: 22, gross_revenue: 3732, total_units: 14, aov: 170, units_gifted: 12 },
+  summary: { total_orders: 22, gross_revenue: 3732, total_units: 14, aov: 170, units_gifted: 12, revenue_by_day: [240, 330, 300, 470, 520, 410, 600], orders_by_day: [3, 5, 4, 6, 7, 5, 8] },
   products: [
     { title: 'Track Jacket', units: 6, revenue: 1225 },
     { title: 'Long Sleeve T', units: 6, revenue: 630 },
@@ -127,8 +127,8 @@ function buildDonut(segs) {
 const RAMP = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)'];
 const rankColor = i => i === 0 ? 'var(--accent)' : RAMP[Math.min(i, RAMP.length - 1)];
 
-// Placeholder sparkline series (API doesn't return daily buckets yet)
-const SPARK_BASE = [60, 80, 70, 110, 120, 95, 140, 130, 165, 155, 125, 195, 175, 210];
+// Fallback spark series used only when API hasn't loaded yet
+const SPARK_FALLBACK = [60, 80, 70, 110, 120, 95, 140, 130, 165, 155, 125, 195, 175, 210];
 
 // ---- TOPBAR ----
 function Topbar({ theme, onToggleTheme, updatedAt }) {
@@ -225,12 +225,12 @@ function SalesView({ data, days }) {
   const totalProdUnits = products.reduce((s, p) => s + p.units, 0);
   const totalProdRev = products.reduce((s, p) => s + p.revenue, 0);
 
-  const trend = SPARK_BASE;
+  const trend = (data?.summary?.revenue_by_day?.length >= 2) ? data.summary.revenue_by_day : SPARK_FALLBACK;
   const chart = areaChart(trend);
   const today = new Date();
-  const step = (days - 1) / 4;
+  const step = (trend.length - 1) / 4;
   const axis = [0, 1, 2, 3, 4].map(n => {
-    const offset = days - 1 - Math.round(n * step);
+    const offset = trend.length - 1 - Math.round(n * step);
     const d = new Date(today); d.setDate(d.getDate() - offset);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   });
@@ -658,7 +658,48 @@ function GiftingView({ data, days }) {
 }
 
 // ---- COMPARE VIEW ----
-function CompareView({ dataA, dataB, days }) {
+function toDateStr(d) {
+  return d.toISOString().slice(0, 10);
+}
+function defaultRanges() {
+  const today = new Date();
+  const endB = new Date(today); endB.setDate(endB.getDate() - 1);
+  const startB = new Date(today); startB.setDate(today.getDate() - 7);
+  const endA = new Date(startB); endA.setDate(startB.getDate() - 1);
+  const startA = new Date(endA); startA.setDate(endA.getDate() - 7);
+  return {
+    fromA: toDateStr(startA), toA: toDateStr(endA),
+    fromB: toDateStr(startB), toB: toDateStr(endB),
+  };
+}
+
+function CompareView() {
+  const init = defaultRanges();
+  const [fromA, setFromA] = useState(init.fromA);
+  const [toA, setToA]     = useState(init.toA);
+  const [fromB, setFromB] = useState(init.fromB);
+  const [toB, setToB]     = useState(init.toB);
+  const [dataA, setDataA] = useState(null);
+  const [dataB, setDataB] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  async function fetchBoth(fa, ta, fb, tb) {
+    setLoading(true);
+    try {
+      const [rA, rB] = await Promise.all([
+        fetch(`/api/shopify?from=${fa}&to=${ta}`).then(r => r.json()),
+        fetch(`/api/shopify?from=${fb}&to=${tb}`).then(r => r.json()),
+      ]);
+      if (rA.ok) setDataA(rA);
+      if (rB.ok) setDataB(rB);
+    } catch (e) { console.warn('Compare fetch failed:', e.message); }
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchBoth(fromA, toA, fromB, toB); }, []);
+
+  function handleCompare() { fetchBoth(fromA, toA, fromB, toB); }
+
   const sA = dataA?.summary || {};
   const sB = dataB?.summary || {};
   const prodsA = dataA?.products || [];
@@ -689,26 +730,32 @@ function CompareView({ dataA, dataB, days }) {
   }).sort((x, y) => y.b - x.b);
   const maxVal = Math.max(...rows.flatMap(r => [r.a, r.b]), 1);
 
-  const now = new Date();
-  const endB = new Date(now); endB.setDate(endB.getDate() - 1);
-  const startB = new Date(now); startB.setDate(startB.getDate() - days);
-  const endA = new Date(startB); endA.setDate(endA.getDate() - 1);
-  const startA = new Date(endA); startA.setDate(startA.getDate() - days + 1);
-  const fd = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const inputStyle = {
+    background: 'var(--surface-2)', border: '1px solid var(--line)', color: 'var(--ink)',
+    padding: '6px 10px', borderRadius: 6, font: '600 12px/1 "Lausanne",sans-serif',
+    outline: 'none', cursor: 'pointer',
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, animation: 'lyFade .35s ease both' }}>
-      {/* Period bar */}
+      {/* Period bar with date pickers */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', background: 'var(--surface)', borderRadius: 10, padding: '16px 22px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ font: '600 10px/1 "Lausanne",sans-serif', letterSpacing: '0.02em', textTransform: 'lowercase', color: 'var(--muted)' }}>period a</span>
-          <span style={{ font: '600 13px/1 "Lausanne",sans-serif', letterSpacing: '-0.01em', color: 'var(--muted)', padding: '7px 13px', borderRadius: 6, background: 'var(--surface-2)' }}>{fd(startA)} – {fd(endA)}</span>
+          <input type="date" value={fromA} onChange={e => setFromA(e.target.value)} style={inputStyle} />
+          <span style={{ font: '400 11px/1 "Lausanne",sans-serif', color: 'var(--faint)' }}>–</span>
+          <input type="date" value={toA} onChange={e => setToA(e.target.value)} style={inputStyle} />
         </div>
         <span style={{ font: '700 12px/1 "Lausanne",sans-serif', color: 'var(--faint)', letterSpacing: '0.04em' }}>VS</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ font: '600 10px/1 "Lausanne",sans-serif', letterSpacing: '0.02em', textTransform: 'lowercase', color: 'var(--muted)' }}>period b</span>
-          <span style={{ font: '600 13px/1 "Lausanne",sans-serif', letterSpacing: '-0.01em', color: 'var(--accent-on)', padding: '7px 13px', borderRadius: 6, background: 'var(--accent)' }}>{fd(startB)} – {fd(endB)}</span>
+          <input type="date" value={fromB} onChange={e => setFromB(e.target.value)} style={{ ...inputStyle, background: 'var(--accent)', color: 'var(--accent-on)', borderColor: 'var(--accent)' }} />
+          <span style={{ font: '400 11px/1 "Lausanne",sans-serif', color: 'var(--faint)' }}>–</span>
+          <input type="date" value={toB} onChange={e => setToB(e.target.value)} style={{ ...inputStyle, background: 'var(--accent)', color: 'var(--accent-on)', borderColor: 'var(--accent)' }} />
         </div>
+        <button onClick={handleCompare} disabled={loading} style={{ font: '600 11px/1 "Lausanne",sans-serif', letterSpacing: '-0.01em', textTransform: 'lowercase', padding: '8px 16px', borderRadius: 6, cursor: 'pointer', background: 'var(--ink)', color: 'var(--paper)', border: 'none', opacity: loading ? 0.5 : 1 }}>
+          {loading ? 'loading…' : 'compare'}
+        </button>
       </div>
 
       {/* 4 KPI cards */}
@@ -865,7 +912,6 @@ export default function Dashboard() {
   const [view, setView] = useState('sales');
   const [days, setDays] = useState(7);
   const [data, setData] = useState(SEED);
-  const [dataA, setDataA] = useState(null);
   const [reaktion, setReaktion] = useState(null);
 
   // Init theme + reaktion from localStorage
@@ -899,36 +945,31 @@ export default function Dashboard() {
     }
   }, []);
 
-  const fetchPrior = useCallback(async (d) => {
-    try {
-      const res = await fetch(`/api/shopify?days=${d * 2}`);
-      const json = await res.json();
-      if (json.ok) setDataA(json);
-    } catch {}
-  }, []);
-
   useEffect(() => {
     fetchCurrent(days);
-    fetchPrior(days);
     const interval = setInterval(() => fetchCurrent(days), 10 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [days, fetchCurrent, fetchPrior]);
+  }, [days, fetchCurrent]);
 
   function handleSetDays(d) {
     setDays(d);
     fetchCurrent(d);
-    fetchPrior(d);
   }
 
   const s = data?.summary || {};
   const giftTotal = data?.gifting?.total_cost ?? SEED.gifting.total_cost;
   const giftUnits = s.units_gifted ?? SEED.summary.units_gifted;
 
+  const revSeries = s.revenue_by_day?.length >= 2 ? s.revenue_by_day : SPARK_FALLBACK;
+  const ordSeries = s.orders_by_day?.length >= 2 ? s.orders_by_day : SPARK_FALLBACK.map(v => Math.round(v / 17));
+  // AOV per day: revenue / orders, 0 if no orders that day
+  const aovSeries = revSeries.map((r, i) => ordSeries[i] > 0 ? Math.round(r / ordSeries[i]) : 0);
+
   const kpiCards = [
-    { label: 'gross revenue', value: s.gross_revenue != null ? fmt(s.gross_revenue) : '—', sub: `last ${days} days`, sparkVals: SPARK_BASE, lineColor: 'var(--accent)' },
-    { label: 'orders', value: s.total_orders ?? '—', sub: 'paid orders', sparkVals: SPARK_BASE.map(v => Math.round(v / 17)), lineColor: 'var(--g1)' },
-    { label: 'avg order value', value: s.aov != null ? fmt(s.aov) : '—', sub: 'per paid order', sparkVals: SPARK_BASE.map(v => 140 + Math.round(v / 30)), lineColor: 'var(--g1)' },
-    { label: 'gifting cost', value: fmt(giftTotal), sub: `${giftUnits} units gifted`, sparkVals: SPARK_BASE.map(v => Math.round(v / 4)), lineColor: 'var(--g2)' },
+    { label: 'gross revenue', value: s.gross_revenue != null ? fmt(s.gross_revenue) : '—', sub: `last ${days} days`, sparkVals: revSeries, lineColor: 'var(--accent)' },
+    { label: 'orders', value: s.total_orders ?? '—', sub: 'paid orders', sparkVals: ordSeries, lineColor: 'var(--g1)' },
+    { label: 'avg order value', value: s.aov != null ? fmt(s.aov) : '—', sub: 'per paid order', sparkVals: aovSeries, lineColor: 'var(--g1)' },
+    { label: 'gifting cost', value: fmt(giftTotal), sub: `${giftUnits} units gifted`, sparkVals: revSeries.map(v => Math.round(v * 0.08)), lineColor: 'var(--g2)' },
   ];
 
   return (
@@ -957,7 +998,7 @@ export default function Dashboard() {
           {view === 'inventory' && <InventoryView data={data} days={days} />}
           {view === 'traffic'   && <TrafficView data={data} />}
           {view === 'gifting'   && <GiftingView data={data} days={days} />}
-          {view === 'compare'   && <CompareView dataA={dataA || data} dataB={data} days={days} />}
+          {view === 'compare'   && <CompareView />}
           {view === 'ads'       && <AdsView reaktion={reaktion} setReaktion={persistReaktion} />}
         </div>
 

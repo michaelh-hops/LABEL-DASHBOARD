@@ -223,6 +223,25 @@ export default async function handler(req, res) {
     const totalUnits = products.reduce(function(s, p) { return s + p.units; }, 0);
     const aov = paidOrders.length > 0 ? Math.round(totalRevenue / paidOrders.length) : 0;
 
+    // 10. Daily series — bucket paid orders by calendar day for sparklines/area chart
+    const dayRevenueMap = {};
+    const dayOrdersMap = {};
+    paidOrders.forEach(function(order) {
+      const day = order.created_at.slice(0, 10); // YYYY-MM-DD
+      dayRevenueMap[day] = (dayRevenueMap[day] || 0) + parseFloat(order.total_price);
+      dayOrdersMap[day] = (dayOrdersMap[day] || 0) + 1;
+    });
+    // Fill every day in the window so gaps show as 0
+    const seriesStart = new Date(since);
+    const seriesEnd = new Date(until);
+    const revenueByDay = [];
+    const ordersByDay = [];
+    for (var d = new Date(seriesStart); d <= seriesEnd; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      revenueByDay.push(Math.round(dayRevenueMap[key] || 0));
+      ordersByDay.push(dayOrdersMap[key] || 0);
+    }
+
     res.status(200).json({
       ok: true,
       days,
@@ -232,6 +251,8 @@ export default async function handler(req, res) {
         total_units: totalUnits,
         aov,
         units_gifted: totalGiftedUnits,
+        revenue_by_day: revenueByDay,
+        orders_by_day: ordersByDay,
       },
       products,
       referrers,
