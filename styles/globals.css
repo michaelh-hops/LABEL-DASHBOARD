@@ -1,2 +1,69 @@
+/* ---- FONTS ---- */
+@font-face { font-family: "Lausanne"; font-weight: 200; font-style: normal; font-display: swap; src: url("/fonts/TWKLausanne-200.woff2") format("woff2"); }
+@font-face { font-family: "Lausanne"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/TWKLausanne-400.woff2") format("woff2"); }
+@font-face { font-family: "Lausanne"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/TWKLausanne-600.woff2") format("woff2"); }
+@font-face { font-family: "Lausanne"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/TWKLausanne-700.woff2") format("woff2"); }
+@font-face { font-family: "Lausanne"; font-weight: 750; font-style: normal; font-display: swap; src: url("/fonts/TWKLausanne-750.woff2") format("woff2"); }
+@font-face { font-family: "Lausanne"; font-weight: 800; font-style: normal; font-display: swap; src: url("/fonts/TWKLausanne-800.woff2") format("woff2"); }
+@font-face { font-family: "PP Editorial New"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/PPEditorialNew-Regular.woff2") format("woff2"); }
+@font-face { font-family: "PP Editorial New"; font-weight: 400; font-style: italic; font-display: swap; src: url("/fonts/PPEditorialNew-Italic.woff2") format("woff2"); }
+
+/* ---- RESET ---- */
 *, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: #0a0a0a; }
+html, body { margin: 0; padding: 0; }
+::selection { background: #ff4540; color: #fff; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; }
+
+/* ---- LIGHT THEME (default) ---- */
+:root {
+  --paper: #f0f0f0;
+  --surface: #ffffff;
+  --surface-2: #f0f0f0;
+  --ink: #121212;
+  --muted: #545454;
+  --faint: #aeaea8;
+  --line: #e5e5e5;
+  --hair: #ededed;
+  --track: #e9e9e9;
+  --neg: #ff4540;
+  --g1: #121212;
+  --g2: #494949;
+  --g3: #6f6f6f;
+  --g4: #b3b3b3;
+  --g5: #dadada;
+  --accent: #1399ff;
+  --accent-on: #ffffff;
+}
+
+/* ---- DARK THEME ---- */
+[data-theme="dark"] {
+  --paper: #000000;
+  --surface: #121212;
+  --surface-2: #1c1c1e;
+  --ink: #ffffff;
+  --muted: #c6c6c6;
+  --faint: #6a6a6a;
+  --line: #262626;
+  --hair: #1e1e1e;
+  --track: #2a2a2a;
+  --neg: #ff5b56;
+  --g1: #ffffff;
+  --g2: #c6c6c6;
+  --g3: #8f8f8f;
+  --g4: #5a5a5a;
+  --g5: #3a3a3a;
+  --accent: #1399ff;
+  --accent-on: #ffffff;
+}
+
+/* ---- ANIMATIONS ---- */
+@keyframes lyPulse {
+  0%   { transform: scale(1); opacity: 1; }
+  70%  { transform: scale(2.6); opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes lyFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
